@@ -6,20 +6,22 @@ Reusable GitHub Actions workflows powered by Claude AI for code review and inter
 
 | # | Workflow | Purpose |
 |---|----------|---------|
-| 1 | [Claude Code Review](#1️⃣-claude-code-review) | Auto-review pull requests |
-| 2 | [Claude Interactive](#2️⃣-claude-interactive) | @mention assistance on issues/PRs |
+| 1 | [Claude Code Review](#1-claude-code-review) | Auto-review pull requests |
+| 2 | [Claude Interactive](#2-claude-interactive) | @mention assistance on issues/PRs |
 
 ---
 
-### 1️⃣ Claude Code Review
+## 1. Claude Code Review
 
-**What it does:**
+### 1.1. What it does
+
 - ✅ Automatically reviews every pull request
 - ✅ Checks code quality, bugs, performance, and security
 - ✅ Comments directly on the PR with feedback
 - ✅ Runs on: PR opened, new commits pushed
 
-**Installation:**
+### 1.2. Installation
+
 <details>
 <summary><strong>📋 Using Claude Code Prompt (Easy)</strong></summary>
 
@@ -70,20 +72,21 @@ git push
 ```
 </details>
 
-**Required Secrets & Environment:**
+### 1.3. Required Secrets & Environment
 
 | Secret | Value | Source |
 |--------|-------|--------|
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
 
-**Setup:**
+### 1.4. Setup
+
 1. Go to your repo: **Settings → Secrets and variables → Actions**
 2. Click "New repository secret"
 3. Add `OPENROUTER_API_KEY` (or `ANTHROPIC_API_KEY`)
 4. Create a test PR to verify it works
 
-**Customize:**
+### 1.5. Customize
 
 ```yaml
 # Review only specific file types
@@ -107,15 +110,17 @@ with:
 
 ---
 
-### 2️⃣ Claude Interactive
+## 2. Claude Interactive
 
-**What it does:**
+### 2.1. What it does
+
 - ✅ Responds to `@duyetbot` or `@claude` mentions
 - ✅ Works in issues, PR comments, and reviews
 - ✅ Ask questions, get code analysis, design help
 - ✅ On-demand assistance triggered by you
 
-**Installation:**
+### 2.2. Installation
+
 <details>
 <summary><strong>📋 Using Claude Code Prompt (Easy)</strong></summary>
 
@@ -177,20 +182,22 @@ git push
 ```
 </details>
 
-**Required Secrets & Environment:**
+### 2.3. Required Secrets & Environment
 
 | Secret | Value | Source |
 |--------|-------|--------|
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
 
-**Setup:**
+### 2.4. Setup
+
 1. Go to your repo: **Settings → Secrets and variables → Actions**
 2. Click "New repository secret"
 3. Add `OPENROUTER_API_KEY` (or `ANTHROPIC_API_KEY`)
 4. Comment on an issue/PR: `@duyetbot help with this`
 
-**Usage Examples:**
+### 2.5. Usage Examples
+
 ```
 @duyetbot review this function
 @claude explain this error
@@ -198,7 +205,7 @@ git push
 @claude design an API for this feature
 ```
 
-**Customize:**
+### 2.6. Customize
 
 ```yaml
 # Restrict Claude's tools for security
