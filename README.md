@@ -2,60 +2,6 @@
 
 Reusable GitHub Actions workflows powered by Claude AI for code review and interactive assistance.
 
-## ⚡ Quick Copy-Paste
-
-### 1. Add Secret
-Go to your repo: **Settings → Secrets and variables → Actions → New repository secret**
-
-```
-Name: OPENROUTER_API_KEY
-Value: sk-or-v1-...  (from https://openrouter.ai/keys)
-```
-
-Or use Anthropic: `ANTHROPIC_API_KEY` (sk-ant-...)
-
-### 2. Copy Workflow
-
-**For automatic code reviews**, create `.github/workflows/review.yml`:
-```yaml
-name: Claude Code Review
-on:
-  pull_request:
-    types: [opened, synchronize]
-jobs:
-  review:
-    uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
-    secrets:
-      api_key: ${{ secrets.OPENROUTER_API_KEY }}
-```
-
-**For interactive help**, create `.github/workflows/claude.yml`:
-```yaml
-name: Claude Code
-on:
-  issue_comment:
-    types: [created]
-  pull_request_review_comment:
-    types: [created]
-  pull_request_review:
-    types: [submitted]
-  issues:
-    types: [opened, assigned]
-jobs:
-  claude:
-    uses: duyet/github-actions/.github/workflows/claude.yml@main
-    secrets:
-      api_key: ${{ secrets.OPENROUTER_API_KEY }}
-```
-
-**For both**, create both files above.
-
-### 3. Done!
-- Code reviews run automatically on PRs
-- Mention `@duyetbot` or `@claude` in comments for help
-
----
-
 ## 📚 Available Workflows
 
 ### 1️⃣ Claude Code Review
