@@ -28,34 +28,31 @@ Reusable GitHub Actions workflows powered by Claude AI for code review and inter
 Copy and paste this prompt to Claude Code in your repository:
 
 ```
-Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
+Create a Claude Code Review workflow in .github/workflows/review.yml with these default settings:
 
-Check if we already have the Claude Code Review workflow installed:
-1. Look for .github/workflows/review.yml or similar workflow files
-2. If found, check the current version by examining the 'uses' field (e.g., duyet/github-actions/.github/workflows/claude-code-review.yml@main)
-3. If not found, this is a fresh install
+name: Claude Code Review
 
-If workflow already exists:
-- Review the current configuration and customizations
-- Migrate to the latest version from duyet/github-actions@main
-- Preserve existing customizations (file_patterns, allowed_tools, etc.)
-- Update any deprecated parameters
-- Test the migrated workflow on a new PR
+on:
+  pull_request:
+    types: [opened, synchronize]
 
-If fresh install, create .github/workflows/review.yml using:
-1. Review the "Claude Code Review" workflow documentation in README.md
-2. Create .github/workflows/review.yml using the workflow_call template from .github/workflows/claude-code-review.yml
-3. Configure OPENROUTER_API_KEY secret in GitHub repository settings
-4. The workflow should trigger on: pull_request opened and synchronize events
-5. Claude should review code quality, bugs, performance, and security
+jobs:
+  review:
+    uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
-Make sure the workflow can be customized with:
-- allowed_tools: restrict which Claude tools are available
-- file_patterns: filter which files to review
-- provider: choose between 'openrouter' or 'anthropic' APIs
-- model: specify which model to use
+This workflow:
+- Automatically reviews every pull request
+- Uses OpenRouter API by default
+- Uses default model: @preset/claude-code-github-action
+- Checks code quality, bugs, performance, and security
 
-Don't create the secret, just guide me through the setup/migration steps and show what changed.
+Then help me:
+1. Create the workflow file at .github/workflows/review.yml
+2. Test it by opening a new pull request
+
+Don't set up the secret yet, just create the workflow file.
 ```
 
 Then follow the guidance from Claude Code.
@@ -139,40 +136,37 @@ with:
 Copy and paste this prompt to Claude Code in your repository:
 
 ```
-Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
+Create a Claude Interactive workflow in .github/workflows/claude.yml with these default settings:
 
-Check if we already have the Claude Interactive workflow installed:
-1. Look for .github/workflows/claude.yml or similar workflow files
-2. If found, check the current version by examining the 'uses' field (e.g., duyet/github-actions/.github/workflows/claude.yml@main)
-3. If not found, this is a fresh install
+name: Claude Code
 
-If workflow already exists:
-- Review the current configuration and customizations
-- Migrate to the latest version from duyet/github-actions@main
-- Preserve existing customizations (bot_id, bot_name, allowed_tools, etc.)
-- Update any deprecated parameters or trigger events
-- Check if new features were added (new trigger events, new customization options)
-- Test the migrated workflow by mentioning @duyetbot/@claude in a comment
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  issues:
+    types: [opened, assigned]
 
-If fresh install, create .github/workflows/claude.yml using:
-1. Review the "Claude Interactive" workflow documentation in README.md
-2. Create .github/workflows/claude.yml using the workflow_call template from .github/workflows/claude.yml
-3. Configure OPENROUTER_API_KEY secret in GitHub repository settings
-4. The workflow should trigger on these events:
-   - issue_comment: created
-   - pull_request_review_comment: created
-   - pull_request_review: submitted
-   - issues: opened, assigned
-5. It should respond to @duyetbot or @claude mentions in issues, PRs, and comments
+jobs:
+  claude:
+    uses: duyet/github-actions/.github/workflows/claude.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
-Make sure the workflow can be customized with:
-- allowed_tools: restrict which Claude tools are available
-- provider: choose between 'openrouter' or 'anthropic' APIs
-- model: specify which model to use
-- bot_id: GitHub bot user ID
-- bot_name: bot display name
+This workflow:
+- Responds to @duyetbot or @claude mentions in issues and PRs
+- Uses OpenRouter API by default
+- Uses default model: @preset/claude-code-github-action
+- Default bot identity: duyetbot (ID: 101855044)
 
-Don't create the secret, just guide me through the setup/migration steps and show what changed.
+Then help me:
+1. Create the workflow file at .github/workflows/claude.yml
+2. Test it by mentioning @duyetbot in a comment on an issue or PR
+
+Don't set up the secret yet, just create the workflow file.
 ```
 
 Then follow the guidance from Claude Code.
