@@ -4,13 +4,10 @@ on:
   workflow_call:
     inputs:
       provider:
-        description: 'API provider to use'
+        description: 'API provider to use (openrouter or anthropic)'
         required: false
-        type: choice
+        type: string
         default: 'openrouter'
-        options:
-          - openrouter
-          - anthropic
 
       model:
         description: 'Model to use (e.g., anthropic/claude-3.5-haiku, @preset/claude-code-github-action)'
