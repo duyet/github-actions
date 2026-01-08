@@ -19,6 +19,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
     with:
       prompt: |
         Perform a comprehensive nightly code review of this repository:

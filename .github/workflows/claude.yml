@@ -62,6 +62,8 @@ jobs:
       contents: read
       pull-requests: write
       id-token: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.bot_github_token }}
 
     steps:
       - name: Checkout repository
@@ -113,7 +115,7 @@ jobs:
             | Model | MODEL_NAME_HERE |
             | Provider | PROVIDER_HERE |
             | Tools | LIST_OF_TOOLS_USED |
-            | Reviewed by | [@duyetbot](https://github.com/duyetbot) |
+            | Reviewed by | [@${{ inputs.bot_name }}](https://github.com/${{ inputs.bot_name }}) |
 
             *Token usage and detailed execution stats available in the [job log](JOB_URL).*
 
@@ -142,6 +144,8 @@ jobs:
       issues: write
       id-token: write
       actions: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.bot_github_token }}
 
     steps:
       - name: Checkout repository
@@ -168,12 +172,14 @@ jobs:
 
   # Issue plan: triggered by issue assignment to @duyetbot
   issue-plan:
-    if: github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == 'duyetbot'
+    if: github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == '${{ inputs.bot_name }}'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
       id-token: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.bot_github_token }}
 
     steps:
       - name: Checkout repository
@@ -221,7 +227,7 @@ jobs:
             | Model | MODEL_NAME_HERE |
             | Provider | PROVIDER_HERE |
             | Tools | LIST_OF_TOOLS_USED |
-            | Analyzed by | [@duyetbot](https://github.com/duyetbot) |
+            | Analyzed by | [@${{ inputs.bot_name }}](https://github.com/${{ inputs.bot_name }}) |
 
             *Token usage and detailed execution stats available in the [job log](JOB_URL).*
 

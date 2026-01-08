@@ -28,6 +28,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
     with:
       # Optional: customize these values
       provider: 'openrouter'  # or 'anthropic'

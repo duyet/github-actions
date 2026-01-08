@@ -66,6 +66,7 @@ jobs:
       id-token: write
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
 
 This default workflow:
 - Automatically reviews every pull request
@@ -109,6 +110,7 @@ jobs:
       id-token: write
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
 ```
 
 </details>
@@ -122,6 +124,9 @@ jobs:
 |--------|-------|--------|
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
+| `DUYETBOT_GITHUB_TOKEN` | GitHub token for bot operations (gh CLI, creating issues/PRs/comments) | Create a Personal Access Token with `repo`, `workflow` scopes at https://github.com/settings/tokens |
+
+**Note:** `bot_github_token` is optional. If not provided, the workflow will use the default `GITHUB_TOKEN` (which has limited permissions for creating issues/PRs/comments).
 
 </details>
 
@@ -135,6 +140,7 @@ jobs:
 | `allowed_tools` | `Read,Grep,Glob,Bash,Plan` | Comma-separated list of allowed tools |
 | `file_patterns` | (empty) | Comma-separated file patterns to review |
 | `show_full_output` | `true` | Show full JSON output in logs (tokens, tools, etc.) |
+| `bot_name` | `duyetbot` | GitHub bot name (used in comments and gh commands) |
 
 </details>
 
@@ -264,6 +270,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
 
 This default workflow:
 - Automatically reviews PRs when assigned to @duyetbot
@@ -326,6 +333,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
 ```
 
 </details>
@@ -339,6 +347,9 @@ jobs:
 |--------|-------|--------|
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
+| `DUYETBOT_GITHUB_TOKEN` | GitHub token for bot operations (gh CLI, creating issues/PRs/comments) | Create a Personal Access Token with `repo`, `workflow` scopes at https://github.com/settings/tokens |
+
+**Note:** `bot_github_token` is optional. If not provided, the workflow will use the default `GITHUB_TOKEN` (which has limited permissions for creating issues/PRs/comments).
 
 </details>
 
@@ -464,6 +475,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
     with:
       prompt: |
         Perform nightly code review:
@@ -505,6 +517,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
     with:
       prompt: |
         Perform nightly code review and create issue with findings.
@@ -521,6 +534,9 @@ jobs:
 |--------|-------|--------|
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
+| `DUYETBOT_GITHUB_TOKEN` | GitHub token for bot operations (gh CLI, creating issues/PRs/comments) | Create a Personal Access Token with `repo`, `workflow` scopes at https://github.com/settings/tokens |
+
+**Note:** `bot_github_token` is optional. If not provided, the workflow will use the default `GITHUB_TOKEN` (which has limited permissions for creating issues/PRs/comments).
 
 </details>
 
@@ -532,6 +548,8 @@ jobs:
 | `prompt` | (required) | Custom prompt for Claude to execute |
 | `provider` | `openrouter` | API provider: `openrouter`, `anthropic`, or `zai` |
 | `model` | `@preset/claude-code-github-action` | Model to use |
+| `bot_id` | `101855044` | GitHub bot user ID |
+| `bot_name` | `duyetbot` | GitHub bot name (used in comments and gh commands) |
 | `allowed_tools` | `Read,Grep,Glob,Bash,Write,Edit` | Comma-separated list of allowed tools |
 | `plugins` | (empty) | Newline-separated list of Claude Code plugins |
 | `plugin_marketplaces` | (empty) | Newline-separated list of plugin marketplace URLs |
@@ -566,6 +584,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
     with:
       prompt: |
         # Nightly Codebase Analysis
@@ -693,6 +712,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
     with:
       prompt: |
         Process open issues:
@@ -736,6 +756,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
     with:
       prompt: |
         Generate weekly project status report.
@@ -816,6 +837,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
+      bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
 ```
 
 </details>
@@ -856,6 +878,7 @@ with:
   provider: 'anthropic'
 secrets:
   api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+  bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}
 
 # Longer timeout for large codebases
 with:

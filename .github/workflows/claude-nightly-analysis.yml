@@ -61,6 +61,7 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.api_key }}
+      bot_github_token: ${{ secrets.bot_github_token }}
     with:
       provider: ${{ inputs.provider }}
       model: ${{ inputs.model }}

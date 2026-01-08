@@ -48,6 +48,7 @@ jobs:
       id-token: write
     env:
       ANTHROPIC_BASE_URL_VALUE: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
+      GITHUB_TOKEN: ${{ secrets.bot_github_token }}
 
     steps:
       - name: Checkout repository
@@ -99,7 +100,7 @@ jobs:
             | Model | MODEL_NAME_HERE |
             | Provider | PROVIDER_HERE |
             | Tools | LIST_OF_TOOLS_USED |
-            | Reviewed by | [@duyetbot](https://github.com/duyetbot) |
+            | Reviewed by | [@${{ inputs.bot_name }}](https://github.com/${{ inputs.bot_name }}) |
 
             *Token usage and detailed execution stats available in the [job log](JOB_URL).*
 
@@ -112,5 +113,5 @@ jobs:
             Replace JOB_URL with: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
             Do NOT include "Co-Authored-By" or "Note: Review generated using Claude Code" text.
           bot_id: 101855044
-          bot_name: duyetbot
+          bot_name: ${{ inputs.bot_name }}
           show_full_output: ${{ inputs.show_full_output }}
