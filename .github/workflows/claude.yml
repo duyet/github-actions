@@ -1,0 +1,70 @@
+name: Claude Code
+
+on:
+  workflow_call:
+    inputs:
+      openrouter_enabled:
+        description: 'Use OpenRouter API instead of Anthropic'
+        required: false
+        type: boolean
+        default: true
+
+      model_preset:
+        description: 'Model preset name for OpenRouter'
+        required: false
+        type: string
+        default: '@preset/claude-code-github-action'
+
+      bot_id:
+        description: 'GitHub bot user ID'
+        required: false
+        type: string
+        default: '101855044'
+
+      bot_name:
+        description: 'GitHub bot name'
+        required: false
+        type: string
+        default: 'duyetbot'
+
+    secrets:
+      api_key:
+        description: 'API key (Anthropic or OpenRouter)'
+        required: true
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '@claude') || contains(github.event.comment.body, '@duyetbot'))) ||
+      (github.event_name == 'pull_request_review_comment' && (contains(github.event.comment.body, '@claude') || contains(github.event.comment.body, '@duyetbot'))) ||
+      (github.event_name == 'pull_request_review' && (contains(github.event.review.body, '@claude') || contains(github.event.review.body, '@duyetbot'))) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude') || contains(github.event.issue.body, '@duyetbot') || contains(github.event.issue.title, '@duyetbot')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.api_key }}
+          ANTHROPIC_BASE_URL: ${{ inputs.openrouter_enabled && 'https://openrouter.ai/api' || '' }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model_preset }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model_preset }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model_preset }}
+        with:
+          anthropic_api_key: ${{ secrets.api_key }}
+          additional_permissions: |
+            actions: read
+          bot_id: ${{ inputs.bot_id }}
+          bot_name: ${{ inputs.bot_name }}
