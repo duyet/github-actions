@@ -30,7 +30,19 @@ Copy and paste this prompt to Claude Code in your repository:
 ```
 Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
 
-Then follow these instructions:
+Check if we already have the Claude Code Review workflow installed:
+1. Look for .github/workflows/review.yml or similar workflow files
+2. If found, check the current version by examining the 'uses' field (e.g., duyet/github-actions/.github/workflows/claude-code-review.yml@main)
+3. If not found, this is a fresh install
+
+If workflow already exists:
+- Review the current configuration and customizations
+- Migrate to the latest version from duyet/github-actions@main
+- Preserve existing customizations (file_patterns, allowed_tools, etc.)
+- Update any deprecated parameters
+- Test the migrated workflow on a new PR
+
+If fresh install, create .github/workflows/review.yml using:
 1. Review the "Claude Code Review" workflow documentation in README.md
 2. Create .github/workflows/review.yml using the workflow_call template from .github/workflows/claude-code-review.yml
 3. Configure OPENROUTER_API_KEY secret in GitHub repository settings
@@ -43,7 +55,7 @@ Make sure the workflow can be customized with:
 - openrouter_enabled: toggle between Anthropic and OpenRouter APIs
 - model_preset: specify which model to use
 
-Don't create the secret, just guide me through the setup steps.
+Don't create the secret, just guide me through the setup/migration steps and show what changed.
 ```
 
 Then follow the guidance from Claude Code.
@@ -129,7 +141,20 @@ Copy and paste this prompt to Claude Code in your repository:
 ```
 Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
 
-Then follow these instructions:
+Check if we already have the Claude Interactive workflow installed:
+1. Look for .github/workflows/claude.yml or similar workflow files
+2. If found, check the current version by examining the 'uses' field (e.g., duyet/github-actions/.github/workflows/claude.yml@main)
+3. If not found, this is a fresh install
+
+If workflow already exists:
+- Review the current configuration and customizations
+- Migrate to the latest version from duyet/github-actions@main
+- Preserve existing customizations (bot_id, bot_name, allowed_tools, etc.)
+- Update any deprecated parameters or trigger events
+- Check if new features were added (new trigger events, new customization options)
+- Test the migrated workflow by mentioning @duyetbot/@claude in a comment
+
+If fresh install, create .github/workflows/claude.yml using:
 1. Review the "Claude Interactive" workflow documentation in README.md
 2. Create .github/workflows/claude.yml using the workflow_call template from .github/workflows/claude.yml
 3. Configure OPENROUTER_API_KEY secret in GitHub repository settings
@@ -147,7 +172,7 @@ Make sure the workflow can be customized with:
 - bot_id: GitHub bot user ID
 - bot_name: bot display name
 
-Don't create the secret, just guide me through the setup steps.
+Don't create the secret, just guide me through the setup/migration steps and show what changed.
 ```
 
 Then follow the guidance from Claude Code.
