@@ -63,6 +63,88 @@ jobs:
 | `claude-code-review.yml` | Pull request opened/updated | Automatic code review |
 | `claude.yml` | @mention in issues/PRs/comments | Interactive assistance |
 
+---
+
+## 🤖 Workflow: Claude Code Review
+
+**What it does:**
+- ✅ Automatically reviews every pull request
+- ✅ Checks code quality, bugs, performance, and security
+- ✅ Comments directly on the PR with feedback
+- ✅ Runs on: PR opened, new commits pushed
+
+**Installation:**
+Copy and paste this prompt to Claude Code in your repository:
+
+```
+install claude code review workflow for automatic PR reviews using duyet/github-actions
+```
+
+**Or manually:**
+```bash
+mkdir -p .github/workflows
+cat > .github/workflows/review.yml << 'EOF'
+name: Claude Code Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  review:
+    uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+EOF
+```
+
+**Then:**
+1. Add `OPENROUTER_API_KEY` secret to GitHub (Settings → Secrets)
+2. Create a PR to test it
+
+---
+
+## 💬 Workflow: Claude Interactive
+
+**What it does:**
+- ✅ Responds to `@duyetbot` or `@claude` mentions
+- ✅ Works in issues, PR comments, and reviews
+- ✅ Ask questions, get code analysis, design help
+- ✅ On-demand assistance triggered by you
+
+**Installation:**
+Copy and paste this prompt to Claude Code in your repository:
+
+```
+install claude interactive workflow for @mention assistance using duyet/github-actions
+```
+
+**Or manually:**
+```bash
+mkdir -p .github/workflows
+cat > .github/workflows/claude.yml << 'EOF'
+name: Claude Code
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+  issues:
+    types: [opened, assigned]
+jobs:
+  claude:
+    uses: duyet/github-actions/.github/workflows/claude.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+EOF
+```
+
+**Then:**
+1. Add `OPENROUTER_API_KEY` secret to GitHub (Settings → Secrets)
+2. Comment on an issue/PR: `@duyetbot help with this`
+
+---
+
 ## 🔧 Customization
 
 ### Filter by File Type
