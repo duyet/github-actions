@@ -557,10 +557,10 @@ git push
 </details>
 
 <details>
-<summary><strong>3.5. Example: Nightly Code Review</strong></summary>
+<summary><strong>3.5. Example: Nightly Codebase Analysis</strong></summary>
 
 ```yaml
-name: Nightly Code Review
+name: Nightly Codebase Analysis
 
 on:
   schedule:
@@ -568,7 +568,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  review:
+  analyze:
     uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
     permissions:
       contents: write
@@ -580,15 +580,102 @@ jobs:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
     with:
       prompt: |
-        Perform nightly code review:
+        # Nightly Codebase Analysis
 
-        1. Review commits from the last 24 hours: `git log --since="24 hours ago"`
-        2. Check open PRs: `gh pr list`
-        3. Run security audit: `npm audit` (if applicable)
-        4. Look for TODO/FIXME comments
+        ## Task
+        Deep analyze the codebase to find the most impactful improvement opportunity.
 
-        Create a GitHub issue titled "Nightly Review - [DATE]" with findings.
-        Only create issue if there are actionable items.
+        ## Discovery Areas
+
+        ### 🐛 Bugs & Defects
+        - Null/undefined reference errors
+        - Race conditions, async/await issues
+        - Uncaught exceptions, missing error handling
+        - Logic errors, incorrect conditionals
+
+        ### 🔒 Security Issues
+        - Hardcoded secrets, API keys, passwords
+        - Injection vulnerabilities (SQL, XSS, command)
+        - Insecure dependencies (`npm audit`, `pip audit`)
+
+        ### ⚡ Performance
+        - N+1 queries, inefficient database access
+        - Memory leaks, unbounded caches
+        - Blocking operations in async code
+
+        ### 🔧 Refactoring Opportunities
+        - Functions > 50 lines or high complexity
+        - Duplicated code blocks (DRY violations)
+        - Deep nesting, inconsistent patterns
+
+        ### ✨ Enhancements
+        - Missing TypeScript types
+        - Missing logging/error messages
+        - Hardcoded configuration
+
+        ### 📝 Documentation & Tests
+        - Public APIs without documentation
+        - Critical paths without test coverage
+        - TODO/FIXME/HACK comments
+
+        ### 🧹 Code Hygiene
+        - Dead code, unused exports/imports
+        - Deprecated API usage
+        - Outdated dependencies
+
+        ## Process
+        1. Scan codebase using Glob, Grep, Read
+        2. Run available linters/audits if present
+        3. Rank findings by impact and effort
+        4. Select the BEST opportunity (high impact, reasonable effort)
+
+        ## Output
+        Create ONE GitHub issue if actionable finding exists.
+
+        **Title:** `[type] scope: description`
+        Types: `bug`, `security`, `perf`, `refactor`, `enhance`, `docs`, `chore`
+
+        **Body:**
+        ## Type
+        - [ ] 🐛 Bug / 🔒 Security / ⚡ Performance
+        - [ ] 🔧 Refactor / ✨ Enhancement / 📝 Docs / 🧹 Chore
+
+        ## Summary
+        <Clear description>
+
+        ## Location
+        - **File:** `path/to/file.ext`
+        - **Lines:** X-Y
+
+        ## Current State
+        <code showing the problem>
+
+        ## Problem
+        <Why this is an issue>
+
+        ## Proposed Solution
+        <Example fix>
+
+        ## Effort
+        - [ ] Small (< 1 hour) / Medium (1-4 hours) / Large (> 4 hours)
+
+        ---
+        <details>
+        <summary>📊 Analysis metadata</summary>
+
+        | Property | Value |
+        |----------|-------|
+        | Created by | [@duyetbot](https://github.com/duyetbot) |
+        | Job | [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+
+        </details>
+
+        ## Rules
+        - Create issue ONLY if finding is actionable
+        - ONE issue per run - highest impact item
+        - Include specific file paths and line numbers
+        - Skip trivial formatting issues
+        - If codebase is healthy, do NOT create any issue
 
       allowed_tools: 'Read,Grep,Glob,Bash,Write,Edit'
       timeout_minutes: 45
