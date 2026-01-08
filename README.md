@@ -128,7 +128,20 @@ git push
 </details>
 
 <details>
-<summary><strong>1.4. Customize</strong></summary>
+<summary><strong>1.4. Configuration Options</strong></summary>
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `provider` | `openrouter` | API provider: `openrouter`, `anthropic`, or `zai` |
+| `model` | `@preset/claude-code-github-action` | Model to use |
+| `allowed_tools` | `Read,Grep,Glob,Bash,Plan` | Comma-separated list of allowed tools |
+| `file_patterns` | (empty) | Comma-separated file patterns to review |
+| `show_full_output` | `true` | Show full JSON output in logs (tokens, tools, etc.) |
+
+</details>
+
+<details>
+<summary><strong>1.5. Customize</strong></summary>
 
 ```yaml
 # Review only specific file types
@@ -148,7 +161,36 @@ secrets:
 # Use custom model
 with:
   model: 'anthropic/claude-3.5-haiku'
+
+# Disable verbose output
+with:
+  show_full_output: false
 ```
+
+</details>
+
+<details>
+<summary><strong>1.6. Comment Format</strong></summary>
+
+Review comments include a collapsible metadata footer:
+
+```markdown
+<details>
+<summary>📊 Review metadata</summary>
+
+| Property | Value |
+|----------|-------|
+| Model | @preset/claude-code-github-action |
+| Provider | openrouter |
+| Tools | Read, Grep, Glob |
+| Reviewed by | [@duyetbot](https://github.com/duyetbot) |
+
+*Token usage and detailed execution stats available in the [job log](...).*
+
+</details>
+```
+
+Full execution details (tokens, cost, duration) are available in the GitHub Actions job summary.
 
 </details>
 
@@ -339,7 +381,22 @@ git push
 </details>
 
 <details>
-<summary><strong>2.6. Customize</strong></summary>
+<summary><strong>2.6. Configuration Options</strong></summary>
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `provider` | `openrouter` | API provider: `openrouter`, `anthropic`, or `zai` |
+| `model` | `@preset/claude-code-github-action` | Model to use |
+| `allowed_tools` | `Read,Grep,Glob,Bash,Plan` | Comma-separated list of allowed tools |
+| `bot_id` | `101855044` | GitHub bot user ID |
+| `bot_name` | `duyetbot` | GitHub bot name |
+| `file_patterns` | (empty) | Comma-separated file patterns for code review |
+| `show_full_output` | `true` | Show full JSON output in logs (tokens, tools, etc.) |
+
+</details>
+
+<details>
+<summary><strong>2.7. Customize</strong></summary>
 
 ```yaml
 # Restrict Claude's tools for security
@@ -360,6 +417,10 @@ with:
 # Use custom model
 with:
   model: 'anthropic/claude-3.5-haiku'
+
+# Disable verbose output
+with:
+  show_full_output: false
 ```
 
 </details>
@@ -491,6 +552,7 @@ git push
 | `claude_args` | (empty) | Additional CLI arguments for Claude |
 | `max_turns` | `25` | Maximum conversation turns |
 | `timeout_minutes` | `30` | Job timeout in minutes |
+| `show_full_output` | `true` | Show full JSON output in logs (tokens, tools, etc.) |
 
 </details>
 
