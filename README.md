@@ -88,15 +88,17 @@ Then follow the guidance from Claude Code.
 </details>
 
 <details>
-<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup (Bash)</summary>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup</summary>
 
-```bash
-mkdir -p .github/workflows
-cat > .github/workflows/review.yml << 'EOF'
+Create `.github/workflows/review.yml`:
+
+```yaml
 name: Claude Code Review
+
 on:
   pull_request:
     types: [opened, synchronize]
+
 jobs:
   review:
     uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
@@ -107,11 +109,6 @@ jobs:
       id-token: write
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
-EOF
-
-git add .github/workflows/review.yml
-git commit -m "feat: add claude code review workflow"
-git push
 ```
 
 </details>
@@ -294,11 +291,11 @@ Then follow the guidance from Claude Code.
 </details>
 
 <details>
-<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup (Bash)</summary>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup</summary>
 
-```bash
-mkdir -p .github/workflows
-cat > .github/workflows/claude.yml << 'EOF'
+Create `.github/workflows/claude.yml`:
+
+```yaml
 name: Claude Code
 
 on:
@@ -329,11 +326,6 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
-EOF
-
-git add .github/workflows/claude.yml
-git commit -m "feat: add claude interactive and automation workflow"
-git push
 ```
 
 </details>
@@ -490,11 +482,11 @@ Then follow the guidance from Claude Code.
 </details>
 
 <details>
-<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup (Bash)</summary>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup</summary>
 
-```bash
-mkdir -p .github/workflows
-cat > .github/workflows/schedule.yml << 'EOF'
+Create `.github/workflows/schedule.yml`:
+
+```yaml
 name: Claude Schedule
 
 on:
@@ -516,11 +508,6 @@ jobs:
     with:
       prompt: |
         Perform nightly code review and create issue with findings.
-EOF
-
-git add .github/workflows/schedule.yml
-git commit -m "feat: add claude schedule workflow"
-git push
 ```
 
 </details>
@@ -808,9 +795,9 @@ jobs:
 <details>
 <summary><strong>Installation</strong></summary>
 
-```bash
-mkdir -p .github/workflows
-cat > .github/workflows/nightly.yml << 'EOF'
+Create `.github/workflows/nightly.yml`:
+
+```yaml
 name: Nightly Analysis
 
 on:
@@ -829,11 +816,6 @@ jobs:
       actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
-EOF
-
-git add .github/workflows/nightly.yml
-git commit -m "feat: add nightly codebase analysis"
-git push
 ```
 
 </details>
