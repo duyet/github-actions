@@ -58,14 +58,7 @@ jobs:
 
 ## 📚 Available Workflows
 
-| Workflow | Trigger | Use Case |
-|----------|---------|----------|
-| `claude-code-review.yml` | Pull request opened/updated | Automatic code review |
-| `claude.yml` | @mention in issues/PRs/comments | Interactive assistance |
-
----
-
-## 🤖 Workflow: Claude Code Review
+### 1️⃣ Claude Code Review
 
 **What it does:**
 - ✅ Automatically reviews every pull request
@@ -74,13 +67,21 @@ jobs:
 - ✅ Runs on: PR opened, new commits pushed
 
 **Installation:**
+<details>
+<summary><strong>📋 Using Claude Code Prompt (Easy)</strong></summary>
+
 Copy and paste this prompt to Claude Code in your repository:
 
 ```
 install claude code review workflow for automatic PR reviews using duyet/github-actions
 ```
 
-**Or manually:**
+Then answer the prompts and it will create the workflow file.
+</details>
+
+<details>
+<summary><strong>🛠️ Manual Setup (Bash)</strong></summary>
+
 ```bash
 mkdir -p .github/workflows
 cat > .github/workflows/review.yml << 'EOF'
@@ -94,15 +95,51 @@ jobs:
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 EOF
-```
 
-**Then:**
-1. Add `OPENROUTER_API_KEY` secret to GitHub (Settings → Secrets)
-2. Create a PR to test it
+git add .github/workflows/review.yml
+git commit -m "feat: add claude code review workflow"
+git push
+```
+</details>
+
+**Required Secrets & Environment:**
+
+| Secret | Value | Source |
+|--------|-------|--------|
+| `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
+| `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
+
+**Setup:**
+1. Go to your repo: **Settings → Secrets and variables → Actions**
+2. Click "New repository secret"
+3. Add `OPENROUTER_API_KEY` (or `ANTHROPIC_API_KEY`)
+4. Create a test PR to verify it works
+
+**Customize:**
+
+```yaml
+# Review only specific file types
+with:
+  file_patterns: 'src/**/*.ts,src/**/*.tsx'
+
+# Restrict Claude's tools for security
+with:
+  allowed_tools: 'Read,Grep,Glob'  # No Bash
+
+# Use Anthropic instead of OpenRouter
+with:
+  openrouter_enabled: false
+secrets:
+  api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# Use custom model
+with:
+  model_preset: 'anthropic/claude-3.5-haiku'
+```
 
 ---
 
-## 💬 Workflow: Claude Interactive
+### 2️⃣ Claude Interactive
 
 **What it does:**
 - ✅ Responds to `@duyetbot` or `@claude` mentions
@@ -111,13 +148,21 @@ EOF
 - ✅ On-demand assistance triggered by you
 
 **Installation:**
+<details>
+<summary><strong>📋 Using Claude Code Prompt (Easy)</strong></summary>
+
 Copy and paste this prompt to Claude Code in your repository:
 
 ```
 install claude interactive workflow for @mention assistance using duyet/github-actions
 ```
 
-**Or manually:**
+Then answer the prompts and it will create the workflow file.
+</details>
+
+<details>
+<summary><strong>🛠️ Manual Setup (Bash)</strong></summary>
+
 ```bash
 mkdir -p .github/workflows
 cat > .github/workflows/claude.yml << 'EOF'
@@ -137,11 +182,56 @@ jobs:
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 EOF
+
+git add .github/workflows/claude.yml
+git commit -m "feat: add claude interactive workflow"
+git push
+```
+</details>
+
+**Required Secrets & Environment:**
+
+| Secret | Value | Source |
+|--------|-------|--------|
+| `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
+| `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
+
+**Setup:**
+1. Go to your repo: **Settings → Secrets and variables → Actions**
+2. Click "New repository secret"
+3. Add `OPENROUTER_API_KEY` (or `ANTHROPIC_API_KEY`)
+4. Comment on an issue/PR: `@duyetbot help with this`
+
+**Usage Examples:**
+```
+@duyetbot review this function
+@claude explain this error
+@duyetbot fix this bug
+@claude design an API for this feature
 ```
 
-**Then:**
-1. Add `OPENROUTER_API_KEY` secret to GitHub (Settings → Secrets)
-2. Comment on an issue/PR: `@duyetbot help with this`
+**Customize:**
+
+```yaml
+# Restrict Claude's tools for security
+with:
+  allowed_tools: 'Read,Grep,Glob'  # No Bash
+
+# Use Anthropic instead of OpenRouter
+with:
+  openrouter_enabled: false
+secrets:
+  api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# Use custom bot name
+with:
+  bot_name: 'mybot'
+  bot_id: '999999999'  # Your bot's GitHub user ID
+
+# Use custom model
+with:
+  model_preset: 'anthropic/claude-3.5-haiku'
+```
 
 ---
 
