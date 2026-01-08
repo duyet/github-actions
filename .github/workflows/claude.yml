@@ -43,6 +43,12 @@ on:
         type: string
         default: ''
 
+      show_full_output:
+        description: 'Show full JSON output from Claude Code (WARNING: may expose secrets in logs)'
+        required: false
+        type: boolean
+        default: true
+
     secrets:
       api_key:
         description: 'API key (Anthropic or OpenRouter)'
@@ -83,6 +89,8 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
+            MODEL: ${{ inputs.model }}
+            PROVIDER: ${{ inputs.provider }}
             ${{ inputs.file_patterns != '' && format('FILE PATTERNS: {0}', inputs.file_patterns) || '' }}
 
             Please review this pull request and provide feedback on:
@@ -95,9 +103,35 @@ jobs:
             Use the repository's CLAUDE.md (if available) for guidance on style and conventions.
             Be constructive and helpful in your feedback.
 
-            Leave your review as a comment on the PR using GitHub CLI.
+            ## Comment Format Instructions
+            When leaving your review comment on the PR using GitHub CLI:
+            1. Start with your review content (findings, suggestions, etc.)
+            2. End with a footer in this EXACT format using a collapsed details block:
+
+            ```
+            <details>
+            <summary>📊 Review metadata</summary>
+
+            | Property | Value |
+            |----------|-------|
+            | Model | MODEL_NAME_HERE |
+            | Provider | PROVIDER_HERE |
+            | Tools | LIST_OF_TOOLS_USED |
+            | Reviewed by | [@duyetbot](https://github.com/duyetbot) |
+
+            *Token usage and detailed execution stats available in the [job log](JOB_URL).*
+
+            </details>
+            ```
+
+            Replace MODEL_NAME_HERE with the actual model from the MODEL variable above.
+            Replace PROVIDER_HERE with the actual provider from the PROVIDER variable above.
+            Replace LIST_OF_TOOLS_USED with the comma-separated list of tools you used during this review (e.g., Read, Grep, Glob).
+            Replace JOB_URL with: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Do NOT include "Co-Authored-By" or "Note: Review generated using Claude Code" text.
           bot_id: ${{ inputs.bot_id }}
           bot_name: ${{ inputs.bot_name }}
+          show_full_output: ${{ inputs.show_full_output }}
 
   # Interactive help: triggered by mentions in comments, reviews, and issues
   interactive-help:
@@ -134,6 +168,7 @@ jobs:
             actions: read
           bot_id: ${{ inputs.bot_id }}
           bot_name: ${{ inputs.bot_name }}
+          show_full_output: ${{ inputs.show_full_output }}
 
   # Issue plan: triggered by issue assignment to @duyetbot
   issue-plan:
@@ -165,6 +200,8 @@ jobs:
             REPO: ${{ github.repository }}
             ISSUE: #${{ github.event.issue.number }}
             TITLE: ${{ github.event.issue.title }}
+            MODEL: ${{ inputs.model }}
+            PROVIDER: ${{ inputs.provider }}
 
             Please analyze this issue and provide:
             1. **Summary**: Brief overview of the issue
@@ -173,6 +210,32 @@ jobs:
             4. **Estimate**: Rough complexity or effort level
 
             Keep the response concise and actionable.
-            Comment on the issue with your analysis.
+
+            ## Comment Format Instructions
+            When commenting on the issue:
+            1. Start with your analysis content
+            2. End with a footer in this EXACT format using a collapsed details block:
+
+            ```
+            <details>
+            <summary>📊 Analysis metadata</summary>
+
+            | Property | Value |
+            |----------|-------|
+            | Model | MODEL_NAME_HERE |
+            | Provider | PROVIDER_HERE |
+            | Tools | LIST_OF_TOOLS_USED |
+            | Analyzed by | [@duyetbot](https://github.com/duyetbot) |
+
+            *Token usage and detailed execution stats available in the [job log](JOB_URL).*
+
+            </details>
+            ```
+
+            Replace MODEL_NAME_HERE with the actual model from the MODEL variable above.
+            Replace PROVIDER_HERE with the actual provider from the PROVIDER variable above.
+            Replace LIST_OF_TOOLS_USED with the comma-separated list of tools you used during this analysis (e.g., Read, Grep, Glob).
+            Replace JOB_URL with: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           bot_id: ${{ inputs.bot_id }}
           bot_name: ${{ inputs.bot_name }}
+          show_full_output: ${{ inputs.show_full_output }}
