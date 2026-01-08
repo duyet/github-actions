@@ -245,4 +245,4 @@ with:
 
 ---
 
-**Made with ❤️ by [Duyet](https://duyet.net)**
+**Built by duyetbot**
