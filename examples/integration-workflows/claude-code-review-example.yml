@@ -7,6 +7,11 @@ on:
 jobs:
   claude-review:
     uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
     with:

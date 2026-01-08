@@ -11,6 +11,12 @@ on:
 jobs:
   nightly-review:
     uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
     with:

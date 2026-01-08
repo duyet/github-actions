@@ -2,29 +2,33 @@
 
 Reusable GitHub Actions workflows powered by Claude AI for code review and interactive assistance.
 
-## 📚 Available Workflows
+## Available Workflows
 
 | # | Workflow | Purpose |
 |---|----------|---------|
 | 1 | [Claude Code Review](#1-claude-code-review) | Auto-review pull requests |
-| 2 | [Claude Interactive](#2-claude-interactive) | Mention @duyetbot on issues/PRs |
+| 2 | [Claude Interactive](#2-claude-interactive--automation) | Mention @duyetbot on issues/PRs |
 | 3 | [Claude Schedule](#3-claude-schedule) | Scheduled tasks with custom prompts |
 
 ---
 
 ## 1. Claude Code Review
 
-### 1.1. What it does
+<details>
+<summary><strong>1.1. What it does</strong></summary>
 
-- ✅ Automatically reviews every pull request
-- ✅ Checks code quality, bugs, performance, and security
-- ✅ Comments directly on the PR with feedback
-- ✅ Runs on: PR opened, new commits pushed
+- Automatically reviews every pull request
+- Checks code quality, bugs, performance, and security
+- Comments directly on the PR with feedback
+- Runs on: PR opened, new commits pushed
 
-### 1.2. Installation
+</details>
 
 <details>
-<summary><strong>📋 Using Claude Code Prompt (Easy)</strong></summary>
+<summary><strong>1.2. Installation</strong></summary>
+
+<details>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Using Claude Code Prompt (Easy)</summary>
 
 Copy and paste this prompt to Claude Code in your repository:
 
@@ -54,6 +58,11 @@ on:
 jobs:
   review:
     uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -74,10 +83,11 @@ Don't set up the secret yet, just create or migrate the workflow file.
 ```
 
 Then follow the guidance from Claude Code.
+
 </details>
 
 <details>
-<summary><strong>🛠️ Manual Setup (Bash)</strong></summary>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup (Bash)</summary>
 
 ```bash
 mkdir -p .github/workflows
@@ -89,6 +99,11 @@ on:
 jobs:
   review:
     uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 EOF
@@ -97,19 +112,23 @@ git add .github/workflows/review.yml
 git commit -m "feat: add claude code review workflow"
 git push
 ```
+
 </details>
 
-### 1.3. Required Secrets & Environment
+</details>
+
+<details>
+<summary><strong>1.3. Required Secrets & Environment</strong></summary>
 
 | Secret | Value | Source |
 |--------|-------|--------|
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
 
-### 1.4. Customize
+</details>
 
 <details>
-<summary>Configuration options</summary>
+<summary><strong>1.4. Customize</strong></summary>
 
 ```yaml
 # Review only specific file types
@@ -137,19 +156,23 @@ with:
 
 ## 2. Claude Interactive & Automation
 
-### 2.1. What it does
+<details>
+<summary><strong>2.1. What it does</strong></summary>
 
-- ✅ **Code Review**: Automatically reviews PRs when assigned to @duyetbot
-- ✅ **Interactive Help**: Responds to `@duyetbot` or `@claude` mentions in comments
-- ✅ **Issue Planning**: Comments with plan/analysis when assigned to an issue
-- ✅ Works in issues, PR comments, reviews, and assignments
-- ✅ Ask questions, get code analysis, design help, or get issue breakdown
-- ✅ Flexible triggers: assignments, mentions, or both
+- **Code Review**: Automatically reviews PRs when assigned to @duyetbot
+- **Interactive Help**: Responds to `@duyetbot` or `@claude` mentions in comments
+- **Issue Planning**: Comments with plan/analysis when assigned to an issue
+- Works in issues, PR comments, reviews, and assignments
+- Ask questions, get code analysis, design help, or get issue breakdown
+- Flexible triggers: assignments, mentions, or both
 
-### 2.2. Installation
+</details>
 
 <details>
-<summary><strong>📋 Using Claude Code Prompt (Easy)</strong></summary>
+<summary><strong>2.2. Installation</strong></summary>
+
+<details>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Using Claude Code Prompt (Easy)</summary>
 
 Copy and paste this prompt to Claude Code in your repository:
 
@@ -193,6 +216,12 @@ on:
 jobs:
   claude:
     uses: duyet/github-actions/.github/workflows/claude.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
@@ -218,10 +247,11 @@ Don't set up the secret yet, just create or migrate the workflow file.
 ```
 
 Then follow the guidance from Claude Code.
+
 </details>
 
 <details>
-<summary><strong>🛠️ Manual Setup (Bash)</strong></summary>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup (Bash)</summary>
 
 ```bash
 mkdir -p .github/workflows
@@ -248,6 +278,12 @@ on:
 jobs:
   claude:
     uses: duyet/github-actions/.github/workflows/claude.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 EOF
@@ -256,23 +292,33 @@ git add .github/workflows/claude.yml
 git commit -m "feat: add claude interactive and automation workflow"
 git push
 ```
+
 </details>
 
-### 2.3. Required Secrets & Environment
+</details>
+
+<details>
+<summary><strong>2.3. Required Secrets & Environment</strong></summary>
 
 | Secret | Value | Source |
 |--------|-------|--------|
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
 
-### 2.4. Setup
+</details>
+
+<details>
+<summary><strong>2.4. Setup</strong></summary>
 
 1. Go to your repo: **Settings → Secrets and variables → Actions**
 2. Click "New repository secret"
 3. Add `OPENROUTER_API_KEY` (or `ANTHROPIC_API_KEY`)
 4. Comment on an issue/PR: `@duyetbot help with this`
 
-### 2.5. Usage Examples
+</details>
+
+<details>
+<summary><strong>2.5. Usage Examples</strong></summary>
 
 **Interactive Help** - Mention @duyetbot in comments:
 ```
@@ -290,7 +336,10 @@ git push
 - Go to any issue → Click "Assignees" → Select @duyetbot
 - Claude will analyze the issue and comment with a plan, approach, and effort estimate
 
-### 2.6. Customize
+</details>
+
+<details>
+<summary><strong>2.6. Customize</strong></summary>
 
 ```yaml
 # Restrict Claude's tools for security
@@ -313,22 +362,28 @@ with:
   model: 'anthropic/claude-3.5-haiku'
 ```
 
+</details>
+
 ---
 
 ## 3. Claude Schedule
 
-### 3.1. What it does
+<details>
+<summary><strong>3.1. What it does</strong></summary>
 
-- ✅ Run Claude tasks on a schedule (cron) or manually (workflow_dispatch)
-- ✅ Execute custom prompts for automated maintenance, reviews, or issue processing
-- ✅ Configure tools, plugins, MCP servers, and settings
-- ✅ Create issues, PRs, or take any automated action
-- ✅ Ideal for nightly code reviews, hourly issue processing, dependency updates
+- Run Claude tasks on a schedule (cron) or manually (workflow_dispatch)
+- Execute custom prompts for automated maintenance, reviews, or issue processing
+- Configure tools, plugins, MCP servers, and settings
+- Create issues, PRs, or take any automated action
+- Ideal for nightly code reviews, hourly issue processing, dependency updates
 
-### 3.2. Installation
+</details>
 
 <details>
-<summary><strong>📋 Using Claude Code Prompt (Easy)</strong></summary>
+<summary><strong>3.2. Installation</strong></summary>
+
+<details>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Using Claude Code Prompt (Easy)</summary>
 
 Copy and paste this prompt to Claude Code in your repository:
 
@@ -347,6 +402,12 @@ on:
 jobs:
   scheduled:
     uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
     with:
@@ -363,10 +424,11 @@ Then help me:
 ```
 
 Then follow the guidance from Claude Code.
+
 </details>
 
 <details>
-<summary><strong>🛠️ Manual Setup (Bash)</strong></summary>
+<summary>&nbsp;&nbsp;&nbsp;&nbsp;Manual Setup (Bash)</summary>
 
 ```bash
 mkdir -p .github/workflows
@@ -381,6 +443,12 @@ on:
 jobs:
   scheduled:
     uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
     with:
@@ -392,16 +460,23 @@ git add .github/workflows/schedule.yml
 git commit -m "feat: add claude schedule workflow"
 git push
 ```
+
 </details>
 
-### 3.3. Required Secrets & Environment
+</details>
+
+<details>
+<summary><strong>3.3. Required Secrets & Environment</strong></summary>
 
 | Secret | Value | Source |
 |--------|-------|--------|
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
 
-### 3.4. Configuration Options
+</details>
+
+<details>
+<summary><strong>3.4. Configuration Options</strong></summary>
 
 | Input | Default | Description |
 |-------|---------|-------------|
@@ -417,7 +492,10 @@ git push
 | `max_turns` | `25` | Maximum conversation turns |
 | `timeout_minutes` | `30` | Job timeout in minutes |
 
-### 3.5. Example: Nightly Code Review
+</details>
+
+<details>
+<summary><strong>3.5. Example: Nightly Code Review</strong></summary>
 
 ```yaml
 name: Nightly Code Review
@@ -430,6 +508,12 @@ on:
 jobs:
   review:
     uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
     with:
@@ -448,7 +532,10 @@ jobs:
       timeout_minutes: 45
 ```
 
-### 3.6. Example: Hourly Issue Processor
+</details>
+
+<details>
+<summary><strong>3.6. Example: Hourly Issue Processor</strong></summary>
 
 ```yaml
 name: Hourly Issue Processor
@@ -461,6 +548,12 @@ on:
 jobs:
   process:
     uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
     with:
@@ -482,7 +575,10 @@ jobs:
       timeout_minutes: 20
 ```
 
-### 3.7. Example: With Plugins and MCP
+</details>
+
+<details>
+<summary><strong>3.7. Example: With Plugins and MCP</strong></summary>
 
 ```yaml
 name: Claude with Plugins
@@ -495,6 +591,12 @@ on:
 jobs:
   weekly:
     uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
     with:
@@ -514,7 +616,10 @@ jobs:
         --system-prompt "You are a senior engineer focused on code quality"
 ```
 
-### 3.8. Common Cron Schedules
+</details>
+
+<details>
+<summary><strong>3.8. Common Cron Schedules</strong></summary>
 
 | Schedule | Cron Expression | Description |
 |----------|-----------------|-------------|
@@ -524,20 +629,30 @@ jobs:
 | Weekdays | `0 9 * * 1-5` | Mon-Fri at 9 AM UTC |
 | Twice daily | `0 9,18 * * *` | 9 AM and 6 PM UTC |
 
+</details>
+
 ---
 
-## 📖 Full Documentation
+## Documentation
+
+<details>
+<summary><strong>Full Documentation</strong></summary>
 
 - **[INTEGRATING.md](INTEGRATING.md)** - Step-by-step setup guide
 - **[CLAUDE.md](CLAUDE.md)** - Project guidelines and best practices
 - **[GitHub Actions Docs](https://docs.github.com/en/actions)**
 - **[Claude Code Action](https://github.com/anthropics/claude-code-action)**
 
-## 🔗 Links
+</details>
+
+<details>
+<summary><strong>Links</strong></summary>
 
 - OpenRouter: https://openrouter.ai
 - Anthropic: https://console.anthropic.com
 - GitHub Secrets: https://docs.github.com/en/actions/security-guides/encrypted-secrets
+
+</details>
 
 ---
 
