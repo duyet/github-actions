@@ -1,0 +1,73 @@
+name: Hourly Issue Processor
+
+on:
+  # Run every hour
+  schedule:
+    - cron: '0 * * * *'
+
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+jobs:
+  process-issues:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+    with:
+      prompt: |
+        Process open GitHub issues in this repository:
+
+        ## Task
+        1. **Find an actionable issue**
+           - List open issues: `gh issue list --state open --limit 10`
+           - Pick ONE issue that:
+             - Has label "good first issue", "help wanted", or "bug"
+             - Has NOT been assigned to anyone
+             - Has NOT been commented on by @duyetbot in the last hour
+           - If no suitable issue found, exit gracefully
+
+        2. **Analyze the issue**
+           - Read the issue details: `gh issue view [NUMBER]`
+           - Understand the problem/feature request
+           - Search the codebase for relevant files
+           - Identify the root cause (for bugs) or implementation approach (for features)
+
+        3. **Take action based on complexity**
+
+           **For simple fixes (typos, small bugs, config changes):**
+           - Create a fix branch: `git checkout -b fix/issue-[NUMBER]`
+           - Implement the fix
+           - Commit with message: "fix: [description] (closes #[NUMBER])"
+           - Push and create PR: `gh pr create --title "Fix: [title]" --body "Closes #[NUMBER]\n\n[description of changes]"`
+           - Comment on the issue with PR link
+
+           **For complex issues (architecture changes, new features):**
+           - Add a detailed comment on the issue with:
+             - Analysis of the problem
+             - Proposed solution approach
+             - Files that need to be modified
+             - Estimated complexity (low/medium/high)
+             - Any questions or clarifications needed
+
+        4. **Update issue labels**
+           - Add label "in-review" if PR created
+           - Add label "needs-discussion" if complex issue analyzed
+
+        ## Guidelines
+        - Only process ONE issue per run to avoid overwhelming
+        - Always test changes locally before creating PR
+        - Include clear commit messages and PR descriptions
+        - Be conservative - if unsure, comment instead of creating PR
+
+      # Full tools for issue resolution
+      allowed_tools: 'Read,Grep,Glob,Bash,Write,Edit'
+
+      # Reasonable timeout for issue processing
+      timeout_minutes: 20
+
+      # Increased turns for complex tasks
+      max_turns: '30'
+
+      # Optional: customize these values
+      provider: 'openrouter'
+      model: '@preset/claude-code-github-action'

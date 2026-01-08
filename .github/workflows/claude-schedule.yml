@@ -1,0 +1,133 @@
+name: Claude Schedule
+
+on:
+  workflow_call:
+    inputs:
+      prompt:
+        description: 'Custom prompt for Claude to execute'
+        required: true
+        type: string
+
+      provider:
+        description: 'API provider to use (openrouter, anthropic, zai)'
+        required: false
+        type: string
+        default: 'openrouter'
+
+      model:
+        description: 'Model to use (e.g., anthropic/claude-3.5-haiku, @preset/claude-code-github-action)'
+        required: false
+        type: string
+        default: '@preset/claude-code-github-action'
+
+      bot_id:
+        description: 'GitHub bot user ID'
+        required: false
+        type: string
+        default: '101855044'
+
+      bot_name:
+        description: 'GitHub bot name'
+        required: false
+        type: string
+        default: 'duyetbot'
+
+      allowed_tools:
+        description: 'Comma-separated list of allowed Claude tools'
+        required: false
+        type: string
+        default: 'Read,Grep,Glob,Bash,Write,Edit'
+
+      plugins:
+        description: 'Newline-separated list of Claude Code plugins to install'
+        required: false
+        type: string
+        default: ''
+
+      plugin_marketplaces:
+        description: 'Newline-separated list of plugin marketplace Git URLs'
+        required: false
+        type: string
+        default: ''
+
+      mcp_config:
+        description: 'MCP server configuration JSON string or path to JSON file'
+        required: false
+        type: string
+        default: ''
+
+      settings:
+        description: 'Claude Code settings as JSON string or path to settings JSON file'
+        required: false
+        type: string
+        default: ''
+
+      claude_args:
+        description: 'Additional arguments to pass directly to Claude CLI'
+        required: false
+        type: string
+        default: ''
+
+      max_turns:
+        description: 'Maximum number of turns for Claude conversation'
+        required: false
+        type: string
+        default: '25'
+
+      timeout_minutes:
+        description: 'Timeout in minutes for the Claude job'
+        required: false
+        type: number
+        default: 30
+
+    secrets:
+      api_key:
+        description: 'API key (Anthropic or OpenRouter)'
+        required: true
+
+jobs:
+  scheduled-task:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Scheduled Task
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.api_key }}
+          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
+        with:
+          anthropic_api_key: ${{ secrets.api_key }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            TRIGGERED_BY: ${{ github.event_name }}
+            RUN_ID: ${{ github.run_id }}
+
+            ${{ inputs.prompt }}
+          claude_args: |
+            --allowed-tools ${{ inputs.allowed_tools }}
+            --max-turns ${{ inputs.max_turns }}
+            ${{ inputs.mcp_config != '' && format('--mcp-config {0}', inputs.mcp_config) || '' }}
+            ${{ inputs.claude_args }}
+          settings: ${{ inputs.settings }}
+          plugins: ${{ inputs.plugins }}
+          plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
+          bot_id: ${{ inputs.bot_id }}
+          bot_name: ${{ inputs.bot_name }}
+          additional_permissions: |
+            actions: read

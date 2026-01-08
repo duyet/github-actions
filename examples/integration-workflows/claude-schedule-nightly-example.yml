@@ -1,0 +1,61 @@
+name: Nightly Code Review
+
+on:
+  # Run every night at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * *'
+
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+jobs:
+  nightly-review:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+    with:
+      prompt: |
+        Perform a comprehensive nightly code review of this repository:
+
+        ## Tasks
+        1. **Recent Changes Analysis**
+           - Review commits from the last 24 hours using `git log --since="24 hours ago"`
+           - Identify any code quality issues, bugs, or security concerns
+
+        2. **Open PRs Review**
+           - List all open PRs using `gh pr list`
+           - For each PR, provide a brief assessment of:
+             - Code quality
+             - Potential bugs
+             - Test coverage concerns
+             - Security implications
+
+        3. **Dependency Check**
+           - Check for outdated dependencies
+           - Run security audit if package.json exists: `npm audit` or `yarn audit`
+
+        4. **Code Quality Scan**
+           - Look for TODO/FIXME comments added recently
+           - Check for any hardcoded secrets or credentials
+           - Identify code duplication patterns
+
+        ## Output
+        Create a GitHub issue with your findings titled "Nightly Code Review - [DATE]"
+        Use `gh issue create` with the following format:
+        - Summary of findings
+        - List of issues found (if any) with severity levels
+        - Recommendations for improvements
+        - Link to relevant PRs or commits
+
+        Only create an issue if there are actionable findings.
+        If everything looks good, skip issue creation and just log a summary.
+
+      # Extended tools for comprehensive review
+      allowed_tools: 'Read,Grep,Glob,Bash,Write,Edit'
+
+      # Longer timeout for nightly tasks
+      timeout_minutes: 45
+
+      # Optional: customize these values
+      provider: 'openrouter'
+      model: '@preset/claude-code-github-action'

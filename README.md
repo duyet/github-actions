@@ -8,6 +8,7 @@ Reusable GitHub Actions workflows powered by Claude AI for code review and inter
 |---|----------|---------|
 | 1 | [Claude Code Review](#1-claude-code-review) | Auto-review pull requests |
 | 2 | [Claude Interactive](#2-claude-interactive) | Mention @duyetbot on issues/PRs |
+| 3 | [Claude Schedule](#3-claude-schedule) | Scheduled tasks with custom prompts |
 
 ---
 
@@ -105,14 +106,10 @@ git push
 | `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
 | `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
 
-### 1.4. Setup
+### 1.4. Customize
 
-1. Go to your repo: **Settings → Secrets and variables → Actions**
-2. Click "New repository secret"
-3. Add `OPENROUTER_API_KEY` (or `ANTHROPIC_API_KEY`)
-4. Create a test PR to verify it works
-
-### 1.5. Customize
+<details>
+<summary>Configuration options</summary>
 
 ```yaml
 # Review only specific file types
@@ -133,6 +130,8 @@ secrets:
 with:
   model: 'anthropic/claude-3.5-haiku'
 ```
+
+</details>
 
 ---
 
@@ -313,6 +312,217 @@ with:
 with:
   model: 'anthropic/claude-3.5-haiku'
 ```
+
+---
+
+## 3. Claude Schedule
+
+### 3.1. What it does
+
+- ✅ Run Claude tasks on a schedule (cron) or manually (workflow_dispatch)
+- ✅ Execute custom prompts for automated maintenance, reviews, or issue processing
+- ✅ Configure tools, plugins, MCP servers, and settings
+- ✅ Create issues, PRs, or take any automated action
+- ✅ Ideal for nightly code reviews, hourly issue processing, dependency updates
+
+### 3.2. Installation
+
+<details>
+<summary><strong>📋 Using Claude Code Prompt (Easy)</strong></summary>
+
+Copy and paste this prompt to Claude Code in your repository:
+
+```
+Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
+
+Create a scheduled workflow for Claude at .github/workflows/schedule.yml:
+
+name: Claude Schedule
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Every day at 2 AM UTC
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  scheduled:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+    with:
+      prompt: |
+        Perform nightly code review:
+        1. Check recent commits for issues
+        2. Review open PRs
+        3. Create an issue with findings
+
+Then help me:
+1. Create the workflow file
+2. Customize the schedule and prompt for my needs
+3. Commit and push the changes
+```
+
+Then follow the guidance from Claude Code.
+</details>
+
+<details>
+<summary><strong>🛠️ Manual Setup (Bash)</strong></summary>
+
+```bash
+mkdir -p .github/workflows
+cat > .github/workflows/schedule.yml << 'EOF'
+name: Claude Schedule
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Every day at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  scheduled:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+    with:
+      prompt: |
+        Perform nightly code review and create issue with findings.
+EOF
+
+git add .github/workflows/schedule.yml
+git commit -m "feat: add claude schedule workflow"
+git push
+```
+</details>
+
+### 3.3. Required Secrets & Environment
+
+| Secret | Value | Source |
+|--------|-------|--------|
+| `OPENROUTER_API_KEY` | Your API key | https://openrouter.ai/keys |
+| `ANTHROPIC_API_KEY` | Your API key (alternative) | https://console.anthropic.com/account/keys |
+
+### 3.4. Configuration Options
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `prompt` | (required) | Custom prompt for Claude to execute |
+| `provider` | `openrouter` | API provider: `openrouter`, `anthropic`, or `zai` |
+| `model` | `@preset/claude-code-github-action` | Model to use |
+| `allowed_tools` | `Read,Grep,Glob,Bash,Write,Edit` | Comma-separated list of allowed tools |
+| `plugins` | (empty) | Newline-separated list of Claude Code plugins |
+| `plugin_marketplaces` | (empty) | Newline-separated list of plugin marketplace URLs |
+| `mcp_config` | (empty) | MCP server config JSON string or file path |
+| `settings` | (empty) | Claude Code settings JSON string or file path |
+| `claude_args` | (empty) | Additional CLI arguments for Claude |
+| `max_turns` | `25` | Maximum conversation turns |
+| `timeout_minutes` | `30` | Job timeout in minutes |
+
+### 3.5. Example: Nightly Code Review
+
+```yaml
+name: Nightly Code Review
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Every day at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  review:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+    with:
+      prompt: |
+        Perform nightly code review:
+
+        1. Review commits from the last 24 hours: `git log --since="24 hours ago"`
+        2. Check open PRs: `gh pr list`
+        3. Run security audit: `npm audit` (if applicable)
+        4. Look for TODO/FIXME comments
+
+        Create a GitHub issue titled "Nightly Review - [DATE]" with findings.
+        Only create issue if there are actionable items.
+
+      allowed_tools: 'Read,Grep,Glob,Bash,Write,Edit'
+      timeout_minutes: 45
+```
+
+### 3.6. Example: Hourly Issue Processor
+
+```yaml
+name: Hourly Issue Processor
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour
+  workflow_dispatch:
+
+jobs:
+  process:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+    with:
+      prompt: |
+        Process open issues:
+
+        1. List open issues: `gh issue list --state open --limit 10`
+        2. Pick ONE unassigned issue with "good first issue" or "bug" label
+        3. Analyze the issue and codebase
+
+        For simple fixes:
+        - Create branch, implement fix, create PR
+
+        For complex issues:
+        - Add detailed analysis comment with approach
+
+      allowed_tools: 'Read,Grep,Glob,Bash,Write,Edit'
+      max_turns: '30'
+      timeout_minutes: 20
+```
+
+### 3.7. Example: With Plugins and MCP
+
+```yaml
+name: Claude with Plugins
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6 AM
+  workflow_dispatch:
+
+jobs:
+  weekly:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+    with:
+      prompt: |
+        Generate weekly project status report.
+
+      # Install plugins
+      plugins: |
+        code-review@claude-code-plugins
+        documentation@claude-code-plugins
+
+      # Custom MCP server config
+      mcp_config: '.github/mcp-config.json'
+
+      # Additional CLI args
+      claude_args: |
+        --system-prompt "You are a senior engineer focused on code quality"
+```
+
+### 3.8. Common Cron Schedules
+
+| Schedule | Cron Expression | Description |
+|----------|-----------------|-------------|
+| Nightly | `0 2 * * *` | Every day at 2 AM UTC |
+| Hourly | `0 * * * *` | Every hour |
+| Weekly | `0 6 * * 1` | Every Monday at 6 AM UTC |
+| Weekdays | `0 9 * * 1-5` | Mon-Fri at 9 AM UTC |
+| Twice daily | `0 9,18 * * *` | 9 AM and 6 PM UTC |
 
 ---
 

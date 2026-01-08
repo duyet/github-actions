@@ -55,17 +55,42 @@ This repository contains reusable GitHub Actions workflows powered by Claude AI 
 - Multiple independent jobs for different use cases
 - Configurable bot identity, model, and allowed tools
 
+### 3. Claude Schedule (`claude-schedule.yml`)
+**Purpose**: Scheduled automated tasks with custom prompts
+
+**Triggers in calling workflows**:
+- `schedule` (cron-based scheduling)
+- `workflow_dispatch` (manual triggering)
+
+**Key Features**:
+- **Custom Prompts**: Execute any prompt on a schedule
+- **Full Tool Access**: Configure allowed tools, plugins, MCP servers
+- **Flexible Scheduling**: Nightly, hourly, weekly, or custom cron
+- **Plugin Support**: Install Claude Code plugins from marketplaces
+- **MCP Configuration**: Custom MCP server setup via JSON
+- **Extended Timeouts**: Configurable timeout for long-running tasks
+
+**Use Cases**:
+- Nightly code reviews with issue creation
+- Hourly issue processing and PR creation
+- Weekly dependency audits
+- Automated documentation updates
+- Repository maintenance tasks
+
 ## Project Structure
 
 ```
 github-actions/
 ├── .github/workflows/
 │   ├── claude-code-review.yml      # Reusable code review workflow
-│   └── claude.yml                   # Reusable interactive workflow
+│   ├── claude.yml                   # Reusable interactive workflow
+│   └── claude-schedule.yml          # Reusable scheduled task workflow
 ├── examples/
 │   └── integration-workflows/       # Example implementations
 │       ├── claude-code-review-example.yml
-│       └── claude-example.yml
+│       ├── claude-example.yml
+│       ├── claude-schedule-nightly-example.yml
+│       └── claude-schedule-hourly-example.yml
 ├── CLAUDE.md                        # This file
 └── README.md                        # User documentation
 ```
@@ -75,9 +100,17 @@ github-actions/
 ### Input Types
 - **allowed_tools**: Restrict which Claude tools can be used
 - **file_patterns**: Filter which files to review
-- **provider**: Choose between 'openrouter' or 'anthropic' APIs
+- **provider**: Choose between 'openrouter', 'anthropic', or 'zai' APIs
 - **model**: Specify model to use
 - **bot_id/bot_name**: Customize bot identity
+- **prompt**: Custom prompt for scheduled tasks (claude-schedule.yml)
+- **plugins**: Claude Code plugins to install (claude-schedule.yml)
+- **plugin_marketplaces**: Plugin marketplace URLs (claude-schedule.yml)
+- **mcp_config**: MCP server configuration (claude-schedule.yml)
+- **settings**: Claude Code settings JSON (claude-schedule.yml)
+- **claude_args**: Additional CLI arguments (claude-schedule.yml)
+- **max_turns**: Maximum conversation turns (claude-schedule.yml)
+- **timeout_minutes**: Job timeout in minutes (claude-schedule.yml)
 
 ### Secret Management
 - **api_key**: Required secret from calling workflow
