@@ -235,19 +235,30 @@ jobs:
 - Want automatic review on all PRs
 - Cost-conscious (Haiku model is cheap)
 
-### Pattern 2: Interactive Help (Good for Team Collaboration)
+### Pattern 2: Interactive & Automated Help (Good for Team Collaboration)
 
 ```yaml
-name: Help
+name: Claude Code
 
 on:
-  issue_comment:
-    types: [created]
+  # Code review: PR assignment or @duyetbot mentions
+  pull_request:
+    types: [opened, assigned, synchronize]
   pull_request_review_comment:
     types: [created]
+  pull_request_review:
+    types: [submitted]
+
+  # Interactive help: mentions in comments
+  issue_comment:
+    types: [created]
+
+  # Issue planning: issue assignment
+  issues:
+    types: [opened, assigned]
 
 jobs:
-  help:
+  claude:
     uses: duyet/github-actions/.github/workflows/claude.yml@main
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
@@ -255,41 +266,51 @@ jobs:
 
 **When to use:**
 - Internal team projects
-- Want on-demand assistance
-- Need flexible analysis
-- Have a specific question
+- Want on-demand assistance + automation
+- Need code review, interactive help, and issue planning
+- Have a specific question or want to assign tasks to Claude
 
-### Pattern 3: Combined Approach (Maximum Coverage)
+### Pattern 3: Complete Coverage (Code Review + Interactive + Automation)
 
 ```yaml
-name: CI/CD
+name: Complete Claude
 
 on:
+  # Automatic PR code review
   pull_request:
     types: [opened, synchronize]
+
+  # Interactive help and automation
   issue_comment:
     types: [created]
   pull_request_review_comment:
     types: [created]
+  pull_request_review:
+    types: [submitted]
+  issues:
+    types: [opened, assigned]
 
 jobs:
-  review:
+  # Automatic review on every PR
+  auto-review:
     if: github.event_name == 'pull_request'
     uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
-  help:
-    if: github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment'
+  # Interactive help + PR assignment review + issue planning
+  interactive:
+    if: github.event_name != 'pull_request' || github.event.action == 'assigned'
     uses: duyet/github-actions/.github/workflows/claude.yml@main
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 ```
 
 **When to use:**
-- Want everything: auto-review + interactive help
-- Have budget for API calls
-- High-quality code output required
+- Want comprehensive coverage: auto-review + interactive + automation
+- Dedicated code review on every PR
+- Plus manual assignments for deeper analysis
+- Have budget for multiple API calls
 
 ## Troubleshooting Integration
 

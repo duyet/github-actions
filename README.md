@@ -136,14 +136,16 @@ with:
 
 ---
 
-## 2. Claude Interactive
+## 2. Claude Interactive & Automation
 
 ### 2.1. What it does
 
-- ✅ Responds to `@duyetbot` or `@claude` mentions
-- ✅ Works in issues, PR comments, and reviews
-- ✅ Ask questions, get code analysis, design help
-- ✅ On-demand assistance triggered by you
+- ✅ **Code Review**: Automatically reviews PRs when assigned to @duyetbot
+- ✅ **Interactive Help**: Responds to `@duyetbot` or `@claude` mentions in comments
+- ✅ **Issue Planning**: Comments with plan/analysis when assigned to an issue
+- ✅ Works in issues, PR comments, reviews, and assignments
+- ✅ Ask questions, get code analysis, design help, or get issue breakdown
+- ✅ Flexible triggers: assignments, mentions, or both
 
 ### 2.2. Installation
 
@@ -173,12 +175,19 @@ If fresh install, create .github/workflows/claude.yml with these default setting
 name: Claude Code
 
 on:
-  issue_comment:
-    types: [created]
+  # Code review: PR assignment or @duyetbot mentions
+  pull_request:
+    types: [opened, assigned, synchronize]
   pull_request_review_comment:
     types: [created]
   pull_request_review:
     types: [submitted]
+
+  # Interactive help: mentions in comments
+  issue_comment:
+    types: [created]
+
+  # Issue planning: issue assignment
   issues:
     types: [opened, assigned]
 
@@ -189,7 +198,9 @@ jobs:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
 This default workflow:
+- Automatically reviews PRs when assigned to @duyetbot
 - Responds to @duyetbot or @claude mentions in issues and PRs
+- Comments with plan/analysis when assigned to an issue
 - Uses OpenRouter API
 - Uses default model: @preset/claude-code-github-action
 - Default bot identity: duyetbot (ID: 101855044)
@@ -198,7 +209,10 @@ This default workflow:
 Then help me:
 1. Create the workflow file at .github/workflows/claude.yml
 2. Commit and push the changes
-3. Test it by mentioning @duyetbot in a comment on an issue or PR
+3. Test it by:
+   - Assigning a PR to @duyetbot for code review
+   - Mentioning @duyetbot in a comment on an issue or PR
+   - Assigning an issue to @duyetbot for plan analysis
 
 Note: If the workflow already exists, show me what changed before making updates.
 Don't set up the secret yet, just create or migrate the workflow file.
@@ -214,15 +228,24 @@ Then follow the guidance from Claude Code.
 mkdir -p .github/workflows
 cat > .github/workflows/claude.yml << 'EOF'
 name: Claude Code
+
 on:
-  issue_comment:
-    types: [created]
+  # Code review: PR assignment or @duyetbot mentions
+  pull_request:
+    types: [opened, assigned, synchronize]
   pull_request_review_comment:
     types: [created]
   pull_request_review:
     types: [submitted]
+
+  # Interactive help: mentions in comments
+  issue_comment:
+    types: [created]
+
+  # Issue planning: issue assignment
   issues:
     types: [opened, assigned]
+
 jobs:
   claude:
     uses: duyet/github-actions/.github/workflows/claude.yml@main
@@ -231,7 +254,7 @@ jobs:
 EOF
 
 git add .github/workflows/claude.yml
-git commit -m "feat: add claude interactive workflow"
+git commit -m "feat: add claude interactive and automation workflow"
 git push
 ```
 </details>
@@ -252,12 +275,21 @@ git push
 
 ### 2.5. Usage Examples
 
+**Interactive Help** - Mention @duyetbot in comments:
 ```
 @duyetbot review this function
 @claude explain this error
 @duyetbot fix this bug
 @claude design an API for this feature
 ```
+
+**Code Review** - Assign a PR to @duyetbot:
+- Go to any PR → Click "Assignees" → Select @duyetbot
+- Claude will automatically review the PR and comment with feedback
+
+**Issue Planning** - Assign an issue to @duyetbot:
+- Go to any issue → Click "Assignees" → Select @duyetbot
+- Claude will analyze the issue and comment with a plan, approach, and effort estimate
 
 ### 2.6. Customize
 

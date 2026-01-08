@@ -39,18 +39,21 @@ This repository contains reusable GitHub Actions workflows powered by Claude AI 
 - Configurable model selection
 
 ### 2. Claude Code (`claude.yml`)
-**Purpose**: Interactive Claude assistance via comments and mentions
+**Purpose**: Interactive assistance, code review, and issue planning via mentions and assignments
 
 **Triggers in calling workflows**:
-- `issue_comment`
-- `pull_request_review_comment`
-- `pull_request_review`
-- `issues`
+- `pull_request` (assignment: code review)
+- `pull_request_review_comment` (@mention: interactive help)
+- `pull_request_review` (@mention: interactive help)
+- `issue_comment` (@mention: interactive help)
+- `issues` (assignment: plan/analysis, opened with @mention: interactive help)
 
 **Key Features**:
-- Triggered by @claude or @duyetbot mentions
-- Works on issues, PRs, and comments
-- Configurable bot identity
+- **Code Review**: Auto-review when PR is assigned to @duyetbot
+- **Interactive Help**: Responds to @claude or @duyetbot mentions in comments
+- **Issue Planning**: Analyzes issues and comments with plan when assigned
+- Multiple independent jobs for different use cases
+- Configurable bot identity, model, and allowed tools
 
 ## Project Structure
 

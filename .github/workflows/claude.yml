@@ -30,18 +30,80 @@ on:
         type: string
         default: 'duyetbot'
 
+      allowed_tools:
+        description: 'Comma-separated list of allowed Claude tools'
+        required: false
+        type: string
+        default: 'Read,Grep,Glob,Bash,Plan'
+
+      file_patterns:
+        description: 'Comma-separated file patterns to review (leave empty for all files)'
+        required: false
+        type: string
+        default: ''
+
     secrets:
       api_key:
         description: 'API key (Anthropic or OpenRouter)'
         required: true
 
 jobs:
-  claude:
+  # Code review: triggered by PR assignment or @duyetbot mention in PR context
+  pr-code-review:
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'assigned') ||
+      (github.event_name == 'pull_request_review_comment' && (contains(github.event.comment.body, '@claude') || contains(github.event.comment.body, '@duyetbot'))) ||
+      (github.event_name == 'pull_request_review' && (contains(github.event.review.body, '@claude') || contains(github.event.review.body, '@duyetbot')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code Review
+        id: review
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.api_key }}
+          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
+        with:
+          anthropic_api_key: ${{ secrets.api_key }}
+          claude_args: |
+            --allowed-tools ${{ inputs.allowed_tools }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            ${{ inputs.file_patterns != '' && format('FILE PATTERNS: {0}', inputs.file_patterns) || '' }}
+
+            Please review this pull request and provide feedback on:
+            - Code quality and best practices
+            - Potential bugs or issues
+            - Performance considerations
+            - Security concerns
+            - Test coverage
+
+            Use the repository's CLAUDE.md (if available) for guidance on style and conventions.
+            Be constructive and helpful in your feedback.
+
+            Leave your review as a comment on the PR using GitHub CLI.
+          bot_id: ${{ inputs.bot_id }}
+          bot_name: ${{ inputs.bot_name }}
+
+  # Interactive help: triggered by mentions in comments, reviews, and issues
+  interactive-help:
     if: |
       (github.event_name == 'issue_comment' && (contains(github.event.comment.body, '@claude') || contains(github.event.comment.body, '@duyetbot'))) ||
-      (github.event_name == 'pull_request_review_comment' && (contains(github.event.comment.body, '@claude') || contains(github.event.comment.body, '@duyetbot'))) ||
       (github.event_name == 'pull_request_review' && (contains(github.event.review.body, '@claude') || contains(github.event.review.body, '@duyetbot'))) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude') || contains(github.event.issue.body, '@duyetbot') || contains(github.event.issue.title, '@duyetbot')))
+      (github.event_name == 'issues' && github.event.action == 'opened' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude') || contains(github.event.issue.body, '@duyetbot') || contains(github.event.issue.title, '@duyetbot')))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -69,5 +131,47 @@ jobs:
           anthropic_api_key: ${{ secrets.api_key }}
           additional_permissions: |
             actions: read
+          bot_id: ${{ inputs.bot_id }}
+          bot_name: ${{ inputs.bot_name }}
+
+  # Issue plan: triggered by issue assignment to @duyetbot
+  issue-plan:
+    if: github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == 'duyetbot'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Plan
+        id: plan
+        uses: anthropics/claude-code-action@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.api_key }}
+          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
+        with:
+          anthropic_api_key: ${{ secrets.api_key }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE: #${{ github.event.issue.number }}
+            TITLE: ${{ github.event.issue.title }}
+
+            Please analyze this issue and provide:
+            1. **Summary**: Brief overview of the issue
+            2. **Analysis**: Key points and considerations
+            3. **Approach**: Recommended steps to address this issue
+            4. **Estimate**: Rough complexity or effort level
+
+            Keep the response concise and actionable.
+            Comment on the issue with your analysis.
           bot_id: ${{ inputs.bot_id }}
           bot_name: ${{ inputs.bot_name }}
