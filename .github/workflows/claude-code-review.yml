@@ -16,10 +16,14 @@ on:
         default: ''
 
       provider:
-        description: 'API provider to use (openrouter, anthropic, zai, etc.)'
+        description: 'API provider to use'
         required: false
-        type: string
+        type: choice
         default: 'openrouter'
+        options:
+          - openrouter
+          - anthropic
+          - zai
 
       model:
         description: 'Model to use (e.g., anthropic/claude-3.5-haiku, @preset/claude-code-github-action)'
