@@ -133,7 +133,8 @@ jobs:
         5. Select the BEST opportunity (high impact, reasonable effort)
 
         ## Output
-        Create ONE GitHub issue if actionable finding exists using `gh issue create`.
+        Create ONE GitHub issue if actionable finding exists using:
+        `gh issue create --title "..." --body "..." --label "..." --assignee duyetbot`
 
         **Title format:** `[type] scope: description`
         - Types: `bug`, `security`, `perf`, `refactor`, `enhance`, `docs`, `chore`
@@ -192,6 +193,7 @@ jobs:
         ```
 
         **Labels to add:** ${{ inputs.issue_labels }}
+        **Assignee:** duyetbot
 
         ## Rules
         - Create issue ONLY if finding is actionable and valuable
