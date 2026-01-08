@@ -183,7 +183,7 @@ jobs:
     secrets:
       api_key: ${{ secrets.ANTHROPIC_API_KEY }}
     with:
-      openrouter_enabled: false
+      provider: 'anthropic'
 ```
 
 ## Step 6: Verify It's Working
@@ -351,7 +351,7 @@ curl https://api.anthropic.com/v1/models
 ```yaml
 with:
   allowed_tools: 'Read,Grep,Glob'  # No bash
-  model_preset: 'anthropic/claude-3.5-haiku'
+  model: 'anthropic/claude-3.5-haiku'
   file_patterns: 'src/**/*.ts'
 ```
 
@@ -384,8 +384,8 @@ After integration:
 
 | API | Secret Name | File Path |
 |-----|------------|-----------|
-| OpenRouter | `OPENROUTER_API_KEY` | `.github/workflows/*.yml` |
-| Anthropic | `ANTHROPIC_API_KEY` | Set `openrouter_enabled: false` |
+| OpenRouter | `OPENROUTER_API_KEY` | Set `provider: 'openrouter'` |
+| Anthropic | `ANTHROPIC_API_KEY` | Set `provider: 'anthropic'` |
 
 ---
 

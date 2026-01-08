@@ -15,14 +15,17 @@ on:
         type: string
         default: ''
 
-      openrouter_enabled:
-        description: 'Use OpenRouter API instead of Anthropic'
+      provider:
+        description: 'API provider to use'
         required: false
-        type: boolean
-        default: true
+        type: choice
+        default: 'openrouter'
+        options:
+          - openrouter
+          - anthropic
 
-      model_preset:
-        description: 'Model preset name for OpenRouter'
+      model:
+        description: 'Model to use (e.g., anthropic/claude-3.5-haiku, @preset/claude-code-github-action)'
         required: false
         type: string
         default: '@preset/claude-code-github-action'
@@ -41,8 +44,7 @@ jobs:
       issues: read
       id-token: write
     env:
-      OPENROUTER_ENABLED: ${{ inputs.openrouter_enabled }}
-      ANTHROPIC_BASE_URL_VALUE: ${{ inputs.openrouter_enabled && 'https://openrouter.ai/api' || '' }}
+      ANTHROPIC_BASE_URL_VALUE: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
 
     steps:
       - name: Checkout repository
@@ -56,9 +58,9 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.api_key }}
           ANTHROPIC_BASE_URL: ${{ env.ANTHROPIC_BASE_URL_VALUE }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model_preset }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model_preset }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model_preset }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
         with:
           anthropic_api_key: ${{ secrets.api_key }}
           claude_args: |

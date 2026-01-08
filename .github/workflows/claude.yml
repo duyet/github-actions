@@ -3,14 +3,17 @@ name: Claude Code
 on:
   workflow_call:
     inputs:
-      openrouter_enabled:
-        description: 'Use OpenRouter API instead of Anthropic'
+      provider:
+        description: 'API provider to use'
         required: false
-        type: boolean
-        default: true
+        type: choice
+        default: 'openrouter'
+        options:
+          - openrouter
+          - anthropic
 
-      model_preset:
-        description: 'Model preset name for OpenRouter'
+      model:
+        description: 'Model to use (e.g., anthropic/claude-3.5-haiku, @preset/claude-code-github-action)'
         required: false
         type: string
         default: '@preset/claude-code-github-action'
@@ -58,10 +61,10 @@ jobs:
         uses: anthropics/claude-code-action@v1
         env:
           ANTHROPIC_API_KEY: ${{ secrets.api_key }}
-          ANTHROPIC_BASE_URL: ${{ inputs.openrouter_enabled && 'https://openrouter.ai/api' || '' }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model_preset }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model_preset }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model_preset }}
+          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
         with:
           anthropic_api_key: ${{ secrets.api_key }}
           additional_permissions: |

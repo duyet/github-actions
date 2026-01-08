@@ -36,7 +36,7 @@ This repository contains reusable GitHub Actions workflows powered by Claude AI 
 - Customizable allowed tools
 - Optional file pattern filtering
 - OpenRouter or Anthropic API support
-- Configurable model preset
+- Configurable model selection
 
 ### 2. Claude Code (`claude.yml`)
 **Purpose**: Interactive Claude assistance via comments and mentions
@@ -72,8 +72,8 @@ github-actions/
 ### Input Types
 - **allowed_tools**: Restrict which Claude tools can be used
 - **file_patterns**: Filter which files to review
-- **openrouter_enabled**: Toggle between Anthropic and OpenRouter APIs
-- **model_preset**: Specify model to use
+- **provider**: Choose between 'openrouter' or 'anthropic' APIs
+- **model**: Specify model to use
 - **bot_id/bot_name**: Customize bot identity
 
 ### Secret Management
@@ -131,7 +131,7 @@ github-actions/
 - **Workflow not triggering**: Check `if:` condition and trigger events
 - **API key not found**: Verify secret name in calling workflow matches
 - **Claude tool errors**: Check `allowed_tools` includes necessary tools
-- **Model not found**: Verify `model_preset` matches OpenRouter available models
+- **Model not found**: Verify `model` matches available models for the provider
 
 ## Related Documentation
 - [GitHub Actions Reusable Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)

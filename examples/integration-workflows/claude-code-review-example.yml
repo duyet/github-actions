@@ -12,7 +12,7 @@ jobs:
     with:
       # Optional: customize these values
       allowed_tools: 'Read,Grep,Glob,Bash,Plan'
-      openrouter_enabled: true
-      model_preset: '@preset/claude-code-github-action'
+      provider: 'openrouter'  # or 'anthropic'
+      model: '@preset/claude-code-github-action'
       # Optional: review only specific file patterns
       # file_patterns: 'src/**/*.ts,src/**/*.tsx,src/**/*.js,src/**/*.jsx'

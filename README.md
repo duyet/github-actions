@@ -52,8 +52,8 @@ If fresh install, create .github/workflows/review.yml using:
 Make sure the workflow can be customized with:
 - allowed_tools: restrict which Claude tools are available
 - file_patterns: filter which files to review
-- openrouter_enabled: toggle between Anthropic and OpenRouter APIs
-- model_preset: specify which model to use
+- provider: choose between 'openrouter' or 'anthropic' APIs
+- model: specify which model to use
 
 Don't create the secret, just guide me through the setup/migration steps and show what changed.
 ```
@@ -111,13 +111,13 @@ with:
 
 # Use Anthropic instead of OpenRouter
 with:
-  openrouter_enabled: false
+  provider: 'anthropic'
 secrets:
   api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
 # Use custom model
 with:
-  model_preset: 'anthropic/claude-3.5-haiku'
+  model: 'anthropic/claude-3.5-haiku'
 ```
 
 ---
@@ -167,8 +167,8 @@ If fresh install, create .github/workflows/claude.yml using:
 
 Make sure the workflow can be customized with:
 - allowed_tools: restrict which Claude tools are available
-- openrouter_enabled: toggle between Anthropic and OpenRouter APIs
-- model_preset: specify which model to use
+- provider: choose between 'openrouter' or 'anthropic' APIs
+- model: specify which model to use
 - bot_id: GitHub bot user ID
 - bot_name: bot display name
 
@@ -239,7 +239,7 @@ with:
 
 # Use Anthropic instead of OpenRouter
 with:
-  openrouter_enabled: false
+  provider: 'anthropic'
 secrets:
   api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
@@ -250,7 +250,7 @@ with:
 
 # Use custom model
 with:
-  model_preset: 'anthropic/claude-3.5-haiku'
+  model: 'anthropic/claude-3.5-haiku'
 ```
 
 ---
