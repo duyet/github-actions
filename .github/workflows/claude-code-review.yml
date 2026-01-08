@@ -16,7 +16,7 @@ on:
         default: ''
 
       provider:
-        description: 'API provider to use (openrouter or anthropic)'
+        description: 'API provider to use (openrouter, anthropic, zai, etc.)'
         required: false
         type: string
         default: 'openrouter'
