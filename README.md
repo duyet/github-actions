@@ -28,7 +28,21 @@ Reusable GitHub Actions workflows powered by Claude AI for code review and inter
 Copy and paste this prompt to Claude Code in your repository:
 
 ```
-Create a Claude Code Review workflow in .github/workflows/review.yml with these default settings:
+Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
+
+Check if we already have the Claude Code Review workflow installed:
+1. Look for .github/workflows/review.yml or similar workflow files
+2. If found, check the current version by examining the 'uses' field (e.g., duyet/github-actions/.github/workflows/claude-code-review.yml@main)
+3. If not found, this is a fresh install
+
+If workflow already exists:
+- Review the current configuration and customizations
+- Migrate to the latest version from duyet/github-actions@main
+- Preserve existing customizations (file_patterns, allowed_tools, etc.)
+- Update any deprecated parameters
+- Test the migrated workflow on a new PR
+
+If fresh install, create .github/workflows/review.yml with these default settings (no customization):
 
 name: Claude Code Review
 
@@ -42,17 +56,20 @@ jobs:
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
-This workflow:
+This default workflow:
 - Automatically reviews every pull request
-- Uses OpenRouter API by default
+- Uses OpenRouter API
 - Uses default model: @preset/claude-code-github-action
+- Allows default tools: Read, Grep, Glob, Bash, Plan
 - Checks code quality, bugs, performance, and security
 
 Then help me:
 1. Create the workflow file at .github/workflows/review.yml
-2. Test it by opening a new pull request
+2. Commit and push the changes
+3. Test it by opening a new pull request
 
-Don't set up the secret yet, just create the workflow file.
+Note: If the workflow already exists, show me what changed before making updates.
+Don't set up the secret yet, just create or migrate the workflow file.
 ```
 
 Then follow the guidance from Claude Code.
@@ -136,7 +153,22 @@ with:
 Copy and paste this prompt to Claude Code in your repository:
 
 ```
-Create a Claude Interactive workflow in .github/workflows/claude.yml with these default settings:
+Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
+
+Check if we already have the Claude Interactive workflow installed:
+1. Look for .github/workflows/claude.yml or similar workflow files
+2. If found, check the current version by examining the 'uses' field (e.g., duyet/github-actions/.github/workflows/claude.yml@main)
+3. If not found, this is a fresh install
+
+If workflow already exists:
+- Review the current configuration and customizations
+- Migrate to the latest version from duyet/github-actions@main
+- Preserve existing customizations (bot_id, bot_name, allowed_tools, etc.)
+- Update any deprecated parameters or trigger events
+- Check if new features were added (new trigger events, new customization options)
+- Test the migrated workflow by mentioning @duyetbot/@claude in a comment
+
+If fresh install, create .github/workflows/claude.yml with these default settings (no customization):
 
 name: Claude Code
 
@@ -156,17 +188,20 @@ jobs:
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
-This workflow:
+This default workflow:
 - Responds to @duyetbot or @claude mentions in issues and PRs
-- Uses OpenRouter API by default
+- Uses OpenRouter API
 - Uses default model: @preset/claude-code-github-action
 - Default bot identity: duyetbot (ID: 101855044)
+- Allows default tools: Read, Grep, Glob, Bash, Plan
 
 Then help me:
 1. Create the workflow file at .github/workflows/claude.yml
-2. Test it by mentioning @duyetbot in a comment on an issue or PR
+2. Commit and push the changes
+3. Test it by mentioning @duyetbot in a comment on an issue or PR
 
-Don't set up the secret yet, just create the workflow file.
+Note: If the workflow already exists, show me what changed before making updates.
+Don't set up the secret yet, just create or migrate the workflow file.
 ```
 
 Then follow the guidance from Claude Code.
