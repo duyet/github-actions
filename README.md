@@ -26,10 +26,25 @@ Reusable GitHub Actions workflows powered by Claude AI for code review and inter
 Copy and paste this prompt to Claude Code in your repository:
 
 ```
-install claude code review workflow for automatic PR reviews using duyet/github-actions
+Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
+
+Then follow these instructions:
+1. Review the "Claude Code Review" workflow documentation in README.md
+2. Create .github/workflows/review.yml using the workflow_call template from .github/workflows/claude-code-review.yml
+3. Configure OPENROUTER_API_KEY secret in GitHub repository settings
+4. The workflow should trigger on: pull_request opened and synchronize events
+5. Claude should review code quality, bugs, performance, and security
+
+Make sure the workflow can be customized with:
+- allowed_tools: restrict which Claude tools are available
+- file_patterns: filter which files to review
+- openrouter_enabled: toggle between Anthropic and OpenRouter APIs
+- model_preset: specify which model to use
+
+Don't create the secret, just guide me through the setup steps.
 ```
 
-Then answer the prompts and it will create the workflow file.
+Then follow the guidance from Claude Code.
 </details>
 
 <details>
@@ -107,10 +122,30 @@ with:
 Copy and paste this prompt to Claude Code in your repository:
 
 ```
-install claude interactive workflow for @mention assistance using duyet/github-actions
+Read https://github.com/duyet/github-actions/blob/main/CLAUDE.md to understand this project's guidelines.
+
+Then follow these instructions:
+1. Review the "Claude Interactive" workflow documentation in README.md
+2. Create .github/workflows/claude.yml using the workflow_call template from .github/workflows/claude.yml
+3. Configure OPENROUTER_API_KEY secret in GitHub repository settings
+4. The workflow should trigger on these events:
+   - issue_comment: created
+   - pull_request_review_comment: created
+   - pull_request_review: submitted
+   - issues: opened, assigned
+5. It should respond to @duyetbot or @claude mentions in issues, PRs, and comments
+
+Make sure the workflow can be customized with:
+- allowed_tools: restrict which Claude tools are available
+- openrouter_enabled: toggle between Anthropic and OpenRouter APIs
+- model_preset: specify which model to use
+- bot_id: GitHub bot user ID
+- bot_name: bot display name
+
+Don't create the secret, just guide me through the setup steps.
 ```
 
-Then answer the prompts and it will create the workflow file.
+Then follow the guidance from Claude Code.
 </details>
 
 <details>
