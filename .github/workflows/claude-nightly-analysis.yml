@@ -1,0 +1,204 @@
+name: Claude Nightly Codebase Analysis
+
+on:
+  workflow_call:
+    inputs:
+      provider:
+        description: 'API provider to use (openrouter, anthropic, or zai)'
+        required: false
+        type: string
+        default: 'openrouter'
+
+      model:
+        description: 'Model to use'
+        required: false
+        type: string
+        default: '@preset/claude-code-github-action'
+
+      allowed_tools:
+        description: 'Comma-separated list of allowed Claude tools'
+        required: false
+        type: string
+        default: 'Read,Grep,Glob,Bash,Write,Edit'
+
+      timeout_minutes:
+        description: 'Job timeout in minutes'
+        required: false
+        type: number
+        default: 45
+
+      max_turns:
+        description: 'Maximum conversation turns'
+        required: false
+        type: string
+        default: '50'
+
+      extra_instructions:
+        description: 'Additional instructions to append to the analysis prompt'
+        required: false
+        type: string
+        default: ''
+
+      issue_labels:
+        description: 'Comma-separated labels to add to created issues'
+        required: false
+        type: string
+        default: 'nightly-analysis,automated'
+
+    secrets:
+      api_key:
+        description: 'API key (Anthropic or OpenRouter)'
+        required: true
+
+jobs:
+  nightly-analysis:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    secrets:
+      api_key: ${{ secrets.api_key }}
+    with:
+      provider: ${{ inputs.provider }}
+      model: ${{ inputs.model }}
+      allowed_tools: ${{ inputs.allowed_tools }}
+      timeout_minutes: ${{ inputs.timeout_minutes }}
+      max_turns: ${{ inputs.max_turns }}
+      prompt: |
+        # Nightly Codebase Analysis
+
+        ## Task
+        Deep analyze the codebase to find the most impactful improvement opportunity.
+
+        ## Discovery Areas
+
+        ### 🐛 Bugs & Defects
+        - Null/undefined reference errors
+        - Off-by-one errors, boundary conditions
+        - Race conditions, async/await issues
+        - Uncaught exceptions, missing error handling
+        - Logic errors, incorrect conditionals
+        - Type mismatches, casting issues
+
+        ### 🔒 Security Issues
+        - Hardcoded secrets, API keys, passwords
+        - Injection vulnerabilities (SQL, XSS, command)
+        - Insecure dependencies (`npm audit`, `pip audit`)
+        - Missing input validation/sanitization
+        - Exposed sensitive data in logs
+
+        ### ⚡ Performance
+        - N+1 queries, inefficient database access
+        - Missing indexes, slow queries
+        - Memory leaks, unbounded caches
+        - Blocking operations in async code
+        - Large bundle size, unoptimized imports
+
+        ### 🔧 Refactoring Opportunities
+        - Functions > 50 lines or cyclomatic complexity > 10
+        - Duplicated code blocks (DRY violations)
+        - Deep nesting (> 3 levels)
+        - God classes/functions doing too much
+        - Inconsistent patterns across codebase
+
+        ### ✨ Enhancements
+        - Missing TypeScript types or weak typing
+        - Incomplete error messages (not user-friendly)
+        - Missing logging for debugging
+        - Configuration hardcoded instead of env vars
+        - Missing retry logic for network calls
+
+        ### 📝 Documentation & Tests
+        - Public APIs without documentation
+        - Complex functions without comments
+        - Critical paths without test coverage
+        - Outdated README or examples
+        - TODO/FIXME/HACK comments
+
+        ### 🧹 Code Hygiene
+        - Dead code, unused exports/imports
+        - Commented-out code blocks
+        - Inconsistent naming conventions
+        - Deprecated API usage
+        - Outdated dependencies
+
+        ## Process
+        1. Scan codebase using Glob, Grep, Read
+        2. Check for patterns in all discovery areas
+        3. Run available linters/audits if present (`npm audit`, `pip audit`, etc.)
+        4. Rank findings by impact and effort
+        5. Select the BEST opportunity (high impact, reasonable effort)
+
+        ## Output
+        Create ONE GitHub issue if actionable finding exists using `gh issue create`.
+
+        **Title format:** `[type] scope: description`
+        - Types: `bug`, `security`, `perf`, `refactor`, `enhance`, `docs`, `chore`
+        - Example: `[security] auth: remove hardcoded API key in config.ts`
+
+        **Issue body template:**
+        ```markdown
+        ## Type
+        - [ ] 🐛 Bug
+        - [ ] 🔒 Security
+        - [ ] ⚡ Performance
+        - [ ] 🔧 Refactor
+        - [ ] ✨ Enhancement
+        - [ ] 📝 Documentation
+        - [ ] 🧹 Chore
+
+        ## Summary
+        <Clear 1-2 sentence description of the issue>
+
+        ## Location
+        - **File:** `path/to/file.ext`
+        - **Lines:** X-Y
+        - **Function/Class:** `functionName` (if applicable)
+
+        ## Current State
+        ```<lang>
+        <code snippet showing the problem>
+        ```
+
+        ## Problem
+        <Why this is an issue - impact, risk, maintainability concerns>
+
+        ## Proposed Solution
+        <Specific approach or fix>
+
+        ```<lang>
+        <example of fixed code if applicable>
+        ```
+
+        ## Effort Estimate
+        - [ ] Small (< 1 hour)
+        - [ ] Medium (1-4 hours)
+        - [ ] Large (> 4 hours)
+
+        ---
+        <details>
+        <summary>📊 Analysis metadata</summary>
+
+        | Property | Value |
+        |----------|-------|
+        | Model | ${{ inputs.model }} |
+        | Provider | ${{ inputs.provider }} |
+        | Created by | [@duyetbot](https://github.com/duyetbot) |
+
+        </details>
+        ```
+
+        **Labels to add:** ${{ inputs.issue_labels }}
+
+        ## Rules
+        - Create issue ONLY if finding is actionable and valuable
+        - ONE issue per run - pick the highest impact item
+        - Include specific file paths and line numbers
+        - Provide enough context for any developer to understand and fix
+        - Skip trivial formatting or style-only issues
+        - If codebase is healthy, do NOT create any issue - just report "No significant issues found"
+
+        ${{ inputs.extra_instructions }}

@@ -9,6 +9,7 @@ Reusable GitHub Actions workflows powered by Claude AI for code review and inter
 | 1 | [Claude Code Review](#1-claude-code-review) | Auto-review pull requests |
 | 2 | [Claude Interactive](#2-claude-interactive--automation) | Mention @duyetbot on issues/PRs |
 | 3 | [Claude Schedule](#3-claude-schedule) | Scheduled tasks with custom prompts |
+| 3.1 | [Claude Nightly Analysis](#31-claude-nightly-analysis) | Pre-configured codebase analysis |
 
 ---
 
@@ -777,6 +778,159 @@ jobs:
 | Weekly | `0 6 * * 1` | Every Monday at 6 AM UTC |
 | Weekdays | `0 9 * * 1-5` | Mon-Fri at 9 AM UTC |
 | Twice daily | `0 9,18 * * *` | 9 AM and 6 PM UTC |
+
+</details>
+
+### 3.1. Claude Nightly Analysis
+
+<details>
+<summary><strong>What it does</strong></summary>
+
+- **Automated codebase analysis** on a schedule
+- Discovers bugs, security issues, performance problems, refactoring opportunities
+- Creates ONE high-impact GitHub issue per run
+- Pre-configured prompt - no need to write complex analysis instructions
+- Built on top of `claude-schedule.yml` (nested reusable workflow)
+
+**Discovery categories:**
+| Category | What it checks |
+|----------|----------------|
+| 🐛 Bugs | Null refs, race conditions, uncaught exceptions |
+| 🔒 Security | Hardcoded secrets, injection vulnerabilities |
+| ⚡ Performance | N+1 queries, memory leaks, blocking ops |
+| 🔧 Refactor | Long functions, DRY violations, deep nesting |
+| ✨ Enhance | Missing types, logging, hardcoded config |
+| 📝 Docs/Tests | Missing docs, test coverage, TODOs |
+| 🧹 Hygiene | Dead code, deprecated APIs, outdated deps |
+
+</details>
+
+<details>
+<summary><strong>Installation</strong></summary>
+
+```bash
+mkdir -p .github/workflows
+cat > .github/workflows/nightly.yml << 'EOF'
+name: Nightly Analysis
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Every day at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    uses: duyet/github-actions/.github/workflows/claude-nightly-analysis.yml@main
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+EOF
+
+git add .github/workflows/nightly.yml
+git commit -m "feat: add nightly codebase analysis"
+git push
+```
+
+</details>
+
+<details>
+<summary><strong>Configuration Options</strong></summary>
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `provider` | `openrouter` | API provider: `openrouter`, `anthropic`, or `zai` |
+| `model` | `@preset/claude-code-github-action` | Model to use |
+| `allowed_tools` | `Read,Grep,Glob,Bash,Write,Edit` | Comma-separated list of allowed tools |
+| `timeout_minutes` | `45` | Job timeout in minutes |
+| `max_turns` | `50` | Maximum conversation turns |
+| `extra_instructions` | (empty) | Additional instructions to append |
+| `issue_labels` | `nightly-analysis,automated` | Labels for created issues |
+
+</details>
+
+<details>
+<summary><strong>Customize</strong></summary>
+
+```yaml
+# Add extra analysis instructions
+with:
+  extra_instructions: |
+    Also check for:
+    - React hooks violations
+    - Missing accessibility attributes
+    - Unused CSS classes
+
+# Custom labels for issues
+with:
+  issue_labels: 'bug,needs-triage,automated'
+
+# Use Anthropic instead of OpenRouter
+with:
+  provider: 'anthropic'
+secrets:
+  api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# Longer timeout for large codebases
+with:
+  timeout_minutes: 60
+  max_turns: '100'
+```
+
+</details>
+
+<details>
+<summary><strong>Issue Format</strong></summary>
+
+Created issues follow this format:
+
+**Title:** `[type] scope: description`
+- Example: `[security] auth: remove hardcoded API key in config.ts`
+
+**Body:**
+```markdown
+## Type
+- [x] 🔒 Security
+
+## Summary
+Hardcoded API key found in configuration file.
+
+## Location
+- **File:** `src/config.ts`
+- **Lines:** 15-17
+
+## Current State
+```typescript
+const API_KEY = "sk-abc123...";
+```
+
+## Problem
+Hardcoded secrets can be exposed in version control.
+
+## Proposed Solution
+```typescript
+const API_KEY = process.env.API_KEY;
+```
+
+## Effort Estimate
+- [x] Small (< 1 hour)
+
+---
+<details>
+<summary>📊 Analysis metadata</summary>
+
+| Property | Value |
+|----------|-------|
+| Model | @preset/claude-code-github-action |
+| Provider | openrouter |
+| Created by | [@duyetbot](https://github.com/duyetbot) |
+
+</details>
+```
 
 </details>
 
