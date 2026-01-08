@@ -7,7 +7,7 @@ Reusable GitHub Actions workflows powered by Claude AI for code review and inter
 | # | Workflow | Purpose |
 |---|----------|---------|
 | 1 | [Claude Code Review](#1-claude-code-review) | Auto-review pull requests |
-| 2 | [Claude Interactive](#2-claude-interactive) | @mention assistance on issues/PRs |
+| 2 | [Claude Interactive](#2-claude-interactive) | Mention @duyetbot on issues/PRs |
 
 ---
 
