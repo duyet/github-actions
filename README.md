@@ -946,8 +946,7 @@ const API_KEY = process.env.API_KEY;
 <details>
 <summary><strong>Full Documentation</strong></summary>
 
-- **[INTEGRATING.md](INTEGRATING.md)** - Step-by-step setup guide
-- **[CLAUDE.md](CLAUDE.md)** - Project guidelines and best practices
+- **[CLAUDE.md](CLAUDE.md)** - Project guidelines, integration guide, and best practices
 - **[GitHub Actions Docs](https://docs.github.com/en/actions)**
 - **[Claude Code Action](https://github.com/anthropics/claude-code-action)**
 

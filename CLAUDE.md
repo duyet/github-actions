@@ -29,8 +29,7 @@ This repository contains reusable GitHub Actions workflows powered by Claude AI 
 ### 1. Claude Code Review (`claude-code-review.yml`)
 **Purpose**: Automated code review on pull requests
 
-**Triggers in calling workflows**:
-- `pull_request: types: [opened, synchronize]`
+**Triggers**: `pull_request: types: [opened, synchronize]`
 
 **Key Features**:
 - Customizable allowed tools
@@ -41,7 +40,7 @@ This repository contains reusable GitHub Actions workflows powered by Claude AI 
 ### 2. Claude Code (`claude.yml`)
 **Purpose**: Interactive assistance, code review, and issue planning via mentions and assignments
 
-**Triggers in calling workflows**:
+**Triggers**:
 - `pull_request` (assignment: code review)
 - `pull_request_review_comment` (@mention: interactive help)
 - `pull_request_review` (@mention: interactive help)
@@ -58,141 +57,140 @@ This repository contains reusable GitHub Actions workflows powered by Claude AI 
 ### 3. Claude Schedule (`claude-schedule.yml`)
 **Purpose**: Scheduled automated tasks with custom prompts
 
-**Triggers in calling workflows**:
-- `schedule` (cron-based scheduling)
-- `workflow_dispatch` (manual triggering)
+**Triggers**: `schedule` (cron), `workflow_dispatch` (manual)
 
 **Key Features**:
-- **Custom Prompts**: Execute any prompt on a schedule
-- **Full Tool Access**: Configure allowed tools, plugins, MCP servers
-- **Flexible Scheduling**: Nightly, hourly, weekly, or custom cron
-- **Plugin Support**: Install Claude Code plugins from marketplaces
-- **MCP Configuration**: Custom MCP server setup via JSON
-- **Extended Timeouts**: Configurable timeout for long-running tasks
+- Custom prompts for any scheduled task
+- Full tool access with configurable restrictions
+- Plugin and MCP server support
+- Extended timeouts for long-running tasks
 
-**Use Cases**:
-- Nightly code reviews with issue creation
-- Hourly issue processing and PR creation
-- Weekly dependency audits
-- Automated documentation updates
-- Repository maintenance tasks
+**Use Cases**: Nightly code reviews, hourly issue processing, weekly dependency audits, automated documentation updates
 
 ## Project Structure
 
 ```
 github-actions/
-├── .github/workflows/
-│   ├── claude-code-review.yml      # Reusable code review workflow
-│   ├── claude.yml                   # Reusable interactive workflow
-│   └── claude-schedule.yml          # Reusable scheduled task workflow
+├── .github/
+│   ├── workflows/
+│   │   ├── claude-code-review.yml      # Reusable code review workflow
+│   │   ├── claude.yml                   # Reusable interactive workflow
+│   │   ├── claude-schedule.yml          # Reusable scheduled task workflow
+│   │   └── claude-nightly-analysis.yml  # Pre-configured nightly analysis
+│   ├── actions/
+│   │   └── claude-setup/
+│   │       └── action.yml               # Composite action for config loading
+│   ├── claude-defaults.json             # Single source of truth for config
+│   └── mcp-config.json                  # MCP server configuration
 ├── examples/
-│   └── integration-workflows/       # Example implementations
-│       ├── claude-code-review-example.yml
-│       ├── claude-example.yml
-│       ├── claude-schedule-nightly-example.yml
-│       └── claude-schedule-hourly-example.yml
-├── CLAUDE.md                        # This file
-└── README.md                        # User documentation
+│   └── integration-workflows/           # Example implementations
+├── CLAUDE.md                            # This file (project guidelines)
+└── README.md                            # User documentation
 ```
 
 ## Configuration Management
 
-### Cross-Repo Reusability Pattern
+### Cross-Repo Reusability
 
-This repository uses a **hybrid configuration approach** to support both same-repo and cross-repo usage:
+This repository uses a **hybrid configuration approach** with fallback defaults:
 
-1. **`.github/claude-defaults.json`** - Source of truth for configuration (used when available)
+1. **`.github/claude-defaults.json`** - Source of truth (used when available)
 2. **`.github/actions/claude-setup/action.yml`** - Composite action with fallback defaults
-3. **Inline fallbacks** - Built-in defaults when config file doesn't exist (cross-repo)
+3. **Inline fallbacks** - Built-in defaults for cross-repo usage
 
-#### Cross-Repo Usage
+**Cross-repo workflows work without any setup in the caller's repository.**
 
-When other repositories use these workflows, they work **without any setup**:
-
-```yaml
-jobs:
-  nightly-analysis:
-    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
-    with:
-      prompt: |
-        # Nightly Codebase Analysis
-        Analyze the codebase and create issues for bugs, security issues, or tech debt.
-    secrets:
-      api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ Cross-Repo Usage Pattern                                            │
+├─────────────────────────────────────────────────────────────────────┤
+│  Caller Repo (other-org/their-repo)                                 │
+│  └── uses: duyet/github-actions/.github/workflows/claude-schedule.yml│
+│                                                                      │
+│  duyet/github-actions (this repo)                                   │
+│  └── .github/actions/claude-setup/action.yml                        │
+│      ├── Try: Read .github/claude-defaults.json                     │
+│      ├── File not found in caller? → Use fallback defaults ✅        │
+│      └── Output: All configuration values                           │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-**What happens automatically:**
-- ✅ Uses fallback defaults when config files don't exist in caller's repo
-- ✅ Bot identity, model, provider all use sensible defaults
-- ✅ Tool profiles selected based on workflow type
-- ✅ MCP configuration uses inline fallback
-- ✅ Plugin marketplace defaults to `duyet/claude-plugins.git`
+### Configuration File: `.github/claude-defaults.json`
 
-#### Customization Options
-
-**Option 1: Use defaults (recommended for quick start)**
-```yaml
-uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
-```
-
-**Option 2: Override specific values**
-```yaml
-uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
-  with:
-    prompt: 'My custom prompt'
-    mcp_config: '{"mcpServers":{"my-server":{"command":"path","args":[]}}'
-    timeout_minutes: '120'
-```
-
-**Option 3: Fork and customize**
-1. Fork this repository
-2. Edit `.github/claude-defaults.json` with your defaults
-3. Update `claude-setup/action.yml` defaults if needed
-4. Use your fork in workflows: `your-org/github-actions/.github/workflows/claude-schedule.yml@main`
-
-#### Composite Action for Workflow Creators
-
-If you're creating workflows in THIS repository, use the composite action:
-
-```yaml
-steps:
-  - uses: actions/checkout@v6
-
-  - uses: ./.github/actions/claude-setup@main
-    id: claude-setup
-    with:
-      workflow_type: 'schedule'  # or 'review', 'interactive', 'plan'
-
-  - uses: anthropics/claude-code-action@v1
-    env:
-      ANTHROPIC_BASE_URL: ${{ steps.claude-setup.outputs.provider_base_url }}
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ steps.claude-setup.outputs.model }}
-    with:
-      bot_id: ${{ steps.claude-setup.outputs.bot_id }}
-      bot_name: ${{ steps.claude-setup.outputs.bot_name }}
-      allowed_tools: ${{ steps.claude-setup.outputs.allowed_tools }}
-      mcp_config: ${{ steps.claude-setup.outputs.mcp_config }}
-      plugin_marketplaces: ${{ steps.claude-setup.outputs.plugin_marketplaces }}
+```json
+{
+  "bot": { "id": "101855044", "name": "duyetbot" },
+  "api": { "default_provider": "openrouter", "default_model": "@preset/claude-code-github-action" },
+  "plugins": { "marketplaces": ["https://github.com/duyet/claude-plugins.git"] },
+  "mcp": {
+    "default_config_path": ".github/mcp-config.json",
+    "default_inline_config": { "mcpServers": { ... } }
+  },
+  "timeouts": { "interactive": 30, "schedule": 60, "review": 30, "plan": 45 },
+  "tool_profiles": {
+    "review": "Read,Grep,Glob,Bash,Plan",
+    "interactive": "Read,Grep,Glob,Bash,Write,Edit,Skill,..."
+  }
+}
 ```
 
 ### Input Types
-- **allowed_tools**: Restrict which Claude tools can be used
-- **file_patterns**: Filter which files to review
-- **provider**: Choose between 'openrouter', 'anthropic', or 'zai' APIs
-- **model**: Specify model to use
-- **bot_id/bot_name**: Customize bot identity
-- **prompt**: Custom prompt for scheduled tasks (claude-schedule.yml)
-- **plugins**: Claude Code plugins to install (claude-schedule.yml)
-- **plugin_marketplaces**: Plugin marketplace URLs (claude-schedule.yml)
-- **mcp_config**: MCP server configuration (claude-schedule.yml)
-- **settings**: Claude Code settings JSON (claude-schedule.yml)
-- **claude_args**: Additional CLI arguments (claude-schedule.yml)
-- **max_turns**: Maximum conversation turns (claude-schedule.yml)
-- **timeout_minutes**: Job timeout in minutes (claude-schedule.yml)
+| Input | Description |
+|-------|-------------|
+| `allowed_tools` | Restrict which Claude tools can be used |
+| `file_patterns` | Filter which files to review |
+| `provider` | Choose between 'openrouter', 'anthropic', or 'zai' APIs |
+| `model` | Specify model to use |
+| `bot_id`/`bot_name` | Customize bot identity |
+| `prompt` | Custom prompt for scheduled tasks |
+| `plugins` | Claude Code plugins to install |
+| `plugin_marketplaces` | Plugin marketplace URLs |
+| `mcp_config` | MCP server configuration |
+| `timeout_minutes` | Job timeout in minutes |
 
 ### Secret Management
-- **api_key**: Required secret from calling workflow
-- Must be provided via `secrets:` in `uses:` statement
+- **api_key**: Required - OpenRouter or Anthropic API key
+- **bot_github_token**: Optional - GitHub PAT for enhanced permissions (creating issues/PRs)
+
+## Maintenance
+
+### MCP Configuration
+
+The `.github/mcp-config.json` file is the canonical source for MCP server configuration.
+
+**Reusable workflows cannot read files from this repo when called cross-repo**, so inline fallback is used in the composite action.
+
+**Adding a new MCP server:**
+1. Edit `.github/mcp-config.json`
+2. Edit `.github/claude-defaults.json` → `mcp.default_inline_config`
+3. Validation workflow checks sync on PRs
+
+| Workflow | MCP Config Source |
+|----------|-------------------|
+| `claude.yml` | `.github/mcp-config.json` file |
+| `claude-code-review.yml` | `.github/mcp-config.json` file |
+| `claude-schedule.yml` | Inline fallback from composite action |
+
+### Plugin Marketplace
+
+Default: `https://github.com/duyet/claude-plugins.git`
+
+To change: Edit `.github/claude-defaults.json` → `plugins.marketplaces`
+
+### Updating Configuration
+
+| Task | Steps |
+|------|-------|
+| Change bot name | Edit `claude-defaults.json` → `bot.name` |
+| Add MCP server | Edit `mcp-config.json` + `claude-defaults.json` |
+| Add workflow type | Add to `tool_profiles` and `timeouts` |
+| Change plugin marketplace | Edit `plugins.marketplaces` |
+
+### Commit Signing
+
+The `issue-plan` job uses `use_commit_signing: true` for verified commits.
+- Trade-off: Cannot perform complex git operations (rebase, etc.)
+- Alternative: Use SSH signing key for full git operations
 
 ## Best Practices
 
@@ -217,13 +215,99 @@ steps:
 - [ ] No sensitive data in logs
 - [ ] Review Claude tool restrictions
 
+## Integration Guide
+
+### Prerequisites
+- GitHub repository with at least one commit
+- Repository access to add GitHub Secrets
+- OpenRouter or Anthropic API key
+
+### Step 1: Get API Key
+
+**OpenRouter (Recommended):**
+1. Visit https://openrouter.ai/keys
+2. Create API key (starts with `sk-or-v1-`)
+
+**Anthropic:**
+1. Visit https://console.anthropic.com/account/keys
+2. Create API key (starts with `sk-ant-`)
+
+### Step 2: Add Secret to GitHub
+
+**Via Web UI:**
+1. Repository → Settings → Secrets and variables → Actions
+2. "New repository secret"
+3. Name: `OPENROUTER_API_KEY` (or `ANTHROPIC_API_KEY`)
+4. Value: Your API key
+
+**Via CLI:**
+```bash
+gh secret set OPENROUTER_API_KEY --body "sk-or-v1-..."
+```
+
+### Step 3: Create Workflow
+
+**Code Review Only** - `.github/workflows/review.yml`:
+```yaml
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+```
+
+**Interactive + Automation** - `.github/workflows/claude.yml`:
+```yaml
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+
+jobs:
+  claude:
+    uses: duyet/github-actions/.github/workflows/claude.yml@main
+    secrets:
+      api_key: ${{ secrets.OPENROUTER_API_KEY }}
+```
+
+### Step 4: Test
+
+**Code Review:** Create a PR and watch Actions tab
+**Interactive:** Comment `@duyetbot help` on an issue
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Workflow not triggering | Check `if:` condition and trigger events |
+| API key not found | Verify secret name matches in workflow |
+| Claude tool errors | Check `allowed_tools` includes necessary tools |
+| Model not found | Use `@preset/claude-code-github-action` |
+| Workflow hangs/times out | Limit `file_patterns`, increase timeout |
+| Invalid marketplace URL | Ensure URL ends with `.git` suffix |
+
+**Debug failed runs:**
+1. Actions tab → Click failed run → Expand step logs
+2. Common issues: Invalid API key, tool not allowed, model not found
+
 ## Contributing
 
 ### Adding New Workflows
 1. Create workflow in `.github/workflows/` with `workflow_call` trigger
 2. Parameterize all configurable values
-3. Add example calling workflow to `examples/`
-4. Update README.md with usage instructions
+3. Add example to `examples/`
+4. Update README.md
 5. Test with example project
 
 ### Updating Existing Workflows
@@ -236,18 +320,12 @@ steps:
 
 - Use semantic versioning for releases
 - Tag releases: `v1.0.0`, `v1.1.0`, etc.
-- Calling workflows should use tagged releases: `@v1` or `@main`
+- Calling workflows should use: `@v1` or `@main`
 - Maintain changelog of breaking changes
 
-## Troubleshooting
-
-### Common Issues
-- **Workflow not triggering**: Check `if:` condition and trigger events
-- **API key not found**: Verify secret name in calling workflow matches
-- **Claude tool errors**: Check `allowed_tools` includes necessary tools
-- **Model not found**: Verify `model` matches available models for the provider
-
 ## Related Documentation
+
 - [GitHub Actions Reusable Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
 - [Claude Code Action](https://github.com/anthropics/claude-code-action)
 - [GitHub Actions Security Best Practices](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
+- [MCP Specification](https://modelcontextprotocol.io/)
