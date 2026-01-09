@@ -50,6 +50,10 @@ on:
         description: 'API key (Anthropic or OpenRouter)'
         required: true
 
+      bot_github_token:
+        description: 'GitHub token for bot operations (defaults to GITHUB_TOKEN if not provided)'
+        required: false
+
 jobs:
   nightly-analysis:
     uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
