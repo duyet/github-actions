@@ -49,6 +49,9 @@ on:
       api_key:
         description: 'API key (Anthropic or OpenRouter)'
         required: true
+      bot_github_token:
+        description: 'GitHub token for bot operations (PAT with repo access)'
+        required: false
 
 jobs:
   # Code review: triggered by PR assignment or @duyetbot mention in PR context
