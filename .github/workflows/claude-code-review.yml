@@ -7,7 +7,7 @@ on:
         description: 'Comma-separated list of allowed Claude tools'
         required: false
         type: string
-        default: 'Read,Grep,Glob,Bash,Plan'
+        default: 'Read,Grep,Glob,Bash,Plan,Write,Edit'
 
       file_patterns:
         description: 'Comma-separated file patterns to review (leave empty for all files)'
@@ -62,13 +62,67 @@ on:
         description: 'API key (Anthropic or OpenRouter)'
         required: true
 
+      bot_github_token:
+        description: 'GitHub token for bot operations (PAT with repo access)'
+        required: false
+
 jobs:
-  claude-review:
+  wait-for-ci:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      checks: read
+      statuses: read
+      id-token: write
+    steps:
+      - name: Wait for CI checks
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const maxWaitTime = 30 * 60 * 1000; // 30 minutes
+            const pollInterval = 10 * 1000; // 10 seconds
+            const startTime = Date.now();
+
+            while (Date.now() - startTime < maxWaitTime) {
+              const checkRuns = await github.rest.checks.listForRef({
+                owner,
+                repo,
+                ref: pr.head.sha,
+              });
+
+              const statuses = await github.rest.repos.getCombinedStatusForRef({
+                owner,
+                repo,
+                ref: pr.head.sha,
+              });
+
+              const allChecks = checkRuns.data.check_runs;
+              const allCompleted = allChecks.every(check =>
+                check.status === 'completed' || check.conclusion
+              );
+
+              if (allCompleted) {
+                core.info(`All CI checks completed. Status: ${statuses.data.state}`);
+                return;
+              }
+
+              core.info('Waiting for CI checks to complete...');
+              await new Promise(resolve => setTimeout(resolve, pollInterval));
+            }
+
+            core.warning('CI checks did not complete within 30 minutes');
+
+  claude-review:
+    needs: wait-for-ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
       pull-requests: write
       issues: read
+      checks: read
+      statuses: read
       id-token: write
       actions: read
     env:
@@ -79,7 +133,56 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          token: ${{ secrets.bot_github_token }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ inputs.bot_name }}"
+          git config --global user.email "${{ inputs.bot_name }}@users.noreply.github.com"
+
+      - name: Check CI Status
+        id: ci-status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+
+            const checkRuns = await github.rest.checks.listForRef({
+              owner,
+              repo,
+              ref: pr.head.sha,
+            });
+
+            const statuses = await github.rest.repos.getCombinedStatusForRef({
+              owner,
+              repo,
+              ref: pr.head.sha,
+            });
+
+            const failedChecks = checkRuns.data.check_runs.filter(
+              check => check.conclusion === 'failure'
+            );
+
+            const hasFailures = statuses.data.state === 'failure' || failedChecks.length > 0;
+
+            let ciSummary = `Overall CI Status: ${statuses.data.state}\n\n`;
+            ciSummary += `Total Checks: ${checkRuns.data.check_runs.length}\n`;
+
+            if (failedChecks.length > 0) {
+              ciSummary += `\n## Failed Checks:\n`;
+              for (const check of failedChecks) {
+                ciSummary += `- **${check.name}** (${check.conclusion})\n`;
+                if (check.details_url) {
+                  ciSummary += `  [View Details](${check.details_url})\n`;
+                }
+              }
+            }
+
+            core.setOutput('has-failures', hasFailures);
+            core.setOutput('ci-summary', ciSummary);
+            core.setOutput('failed-checks-count', failedChecks.length);
 
       - name: Run Claude Code Review
         id: claude-review
@@ -106,6 +209,15 @@ jobs:
             PROVIDER: ${{ inputs.provider }}
             ${{ inputs.file_patterns != '' && format('FILE PATTERNS: {0}', inputs.file_patterns) || '' }}
 
+            ## CI/CD Status
+            ${{ steps.ci-status.outputs.ci-summary }}
+
+            ## Task
+            Review this pull request and provide comprehensive feedback.
+
+            ${{ steps.ci-status.outputs.has-failures == 'true' && format('**IMPORTANT: CI checks have failed. Analyze the failures and make code changes to fix them.**') || '' }}
+
+            ## Review Scope
             Please review this pull request and provide feedback on:
             - Code quality and best practices
             - Potential bugs or issues
@@ -115,6 +227,26 @@ jobs:
 
             Use the repository's CLAUDE.md (if available) for guidance on style and conventions.
             Be constructive and helpful in your feedback.
+
+            ## CI Failure Resolution (if applicable)
+            ${{ steps.ci-status.outputs.has-failures == 'true' && format('
+            If CI checks have failed:
+            1. **Analyze the failures:** Understand what each failed check reports
+            2. **Root cause analysis:** Use Read, Grep, Bash to investigate the failure causes
+            3. **Fix the code:** Use Edit or Write to make necessary corrections
+            4. **Verify the fix:** Run relevant local tests/linters if possible using Bash
+            5. **Commit changes:** Use Bash to commit fixes with semantic commit message
+               - Format: `fix: <scope> - <description> (PR #{PR_NUMBER})`
+               - Example: `fix: auth - resolve JWT validation issue (PR #123)`
+            6. **Push changes:** Push to the PR branch using Bash
+            7. **Comment:** Leave a comment describing the fixes made
+            ') || '' }}
+
+            ## Semantic Commit Format
+            When creating commits, use semantic format:
+            - **Format:** `<type>: <scope> - <subject> (PR #<number>)`
+            - **Types:** `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`
+            - **Always include PR number:** `(PR #${{ github.event.pull_request.number }})`
 
             ## Comment Format Instructions
             When leaving your review comment on the PR using GitHub CLI:
