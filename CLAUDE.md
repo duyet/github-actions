@@ -24,6 +24,18 @@ This repository contains reusable GitHub Actions workflows powered by Claude AI 
 - Validate all external inputs using allowed tools
 - Use least-privilege permissions (minimal `permissions:` block)
 
+### Git Workflow Standards
+- **Commit Format**: Semantic versioning `type(scope): description`
+  - Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `chore`, `test`, `ci`, `build`
+  - Example: `feat(workflows): add CI failure detection`
+- **Branch Format**: Semantic with issue reference `type/#issue-description`
+  - Format: `<type>/#<issue-number>-<description>` (lowercase, hyphens only)
+  - Examples: `fix/#123-auth-bug`, `feat/#456-api-endpoint`, `docs/#789-readme-update`
+  - Types: `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`
+- **PR Title**: Use semantic format matching commit message
+  - Include issue reference: `fix: resolve #123 - brief description`
+- **Pull Requests**: One feature/fix per PR, always link to issue
+
 ## Workflow Types
 
 ### 1. Claude Code Review (`claude-code-review.yml`)

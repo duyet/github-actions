@@ -279,7 +279,10 @@ jobs:
             Comment using: `gh issue comment ${{ github.event.issue.number }} --body "..."`
 
             #### For Implementation Issues:
-            1. **Create a branch**: `git checkout -b issue-${{ github.event.issue.number }}-<brief-description>`
+            1. **Create a branch** (use semantic format): `git checkout -b fix/#${{ github.event.issue.number }}-brief-description`
+               - Format: `<type>/#<issue>-<description>` (e.g., `fix/#123-auth-bug`, `feat/#124-api-endpoint`)
+               - Types: `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`
+               - Use hyphens to separate words, lowercase only
             2. **Implement the fix/feature**:
                - Read relevant files using Read, Glob, Grep
                - Make code changes using Edit or Write
@@ -289,7 +292,7 @@ jobs:
                - Or for features: `git commit -m "feat: add #${{ github.event.issue.number }} - feature description"`
                - Or for other types: `docs:`, `refactor:`, `chore:`, `perf:`, etc.
                - Always include the issue number (#123) in the commit message
-            4. **Push branch**: `git push origin issue-${{ github.event.issue.number }}-<brief-description>`
+            4. **Push branch**: `git push origin fix/#${{ github.event.issue.number }}-brief-description`
             5. **Create PR** (with semantic commit format in title): `gh pr create --title "fix: resolve #${{ github.event.issue.number }} - brief description" --body "Closes #${{ github.event.issue.number }}" --base main`
             6. **Comment on issue**: `gh issue comment ${{ github.event.issue.number }} --body "Implemented in PR #<pr-number>"`
 
