@@ -93,6 +93,22 @@ jobs:
             TRIGGERED_BY: ${{ github.event_name }}
             RUN_ID: ${{ github.run_id }}
 
+            ## Semantic Commit Format Requirements
+
+            When creating commits or pull requests, ALWAYS use semantic commit format:
+            - **Format:** `<type>: <scope> - <subject>`
+            - **Types:** `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`, `ci`, `build`
+            - **Examples:**
+              - `fix: api - resolve timeout issue`
+              - `feat: ui - add dark mode support`
+              - `docs: readme - update installation guide`
+              - `refactor: utils - simplify validation logic`
+              - `perf: database - optimize query performance`
+            - **PR titles must also follow semantic format**
+            - **Always include issue numbers when available:** `fix: api - resolve #123`
+
+            ---
+
             ${{ inputs.prompt }}
           claude_args: |
             --allowed-tools ${{ steps.claude-setup.outputs.allowed_tools }}
