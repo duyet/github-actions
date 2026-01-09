@@ -1,0 +1,90 @@
+name: Validate MCP Config Sync
+
+on:
+  pull_request:
+    paths:
+      - '.github/mcp-config.json'
+      - '.github/workflows/claude-schedule.yml'
+      - '.github/workflows/claude-nightly-analysis.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read MCP config file
+        id: read_file
+        run: |
+          CONTENT=$(cat .github/mcp-config.json | jq -c .)
+          # Remove newlines for comparison
+          CONTENT_NO_SPACES=$(echo $CONTENT | jq -c . | tr -d '[:space:]')
+          echo "content=$CONTENT_NO_SPACES" >> $GITHUB_OUTPUT
+          echo "📄 File content: $CONTENT_NO_SPACES"
+
+      - name: Read workflow env var
+        id: read_workflow
+        run: |
+          # Extract DEFAULT_MCP_CONFIG from claude-schedule.yml
+          WORKFLOW_CONTENT=$(cat .github/workflows/claude-schedule.yml)
+          DEFAULT_CONFIG=$(echo "$WORKFLOW_CONTENT" | grep 'DEFAULT_MCP_CONFIG:' | cut -d':' -f2- | xargs)
+          # Remove spaces for comparison
+          DEFAULT_NO_SPACES=$(echo $DEFAULT_CONFIG | tr -d '[:space:]')
+          echo "workflow_config=$DEFAULT_NO_SPACES" >> $GITHUB_OUTPUT
+          echo "⚙️  Workflow env: $DEFAULT_NO_SPACES"
+
+      - name: Compare configs
+        id: compare
+        run: |
+          FILE_CONTENT="${{ steps.read_file.outputs.content }}"
+          WORKFLOW_CONTENT="${{ steps.read_workflow.outputs.workflow_config }}"
+
+          if [ "$FILE_CONTENT" = "$WORKFLOW_CONTENT" ]; then
+            echo "✅ MCP config is in sync!"
+            echo "synced=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ MCP config is OUT OF SYNC!"
+            echo "File:    $FILE_CONTENT"
+            echo "Workflow: $WORKFLOW_CONTENT"
+            echo "synced=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Comment on PR if sync fails
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⚠️ MCP Config Sync Error
+
+              The MCP configuration is out of sync between:
+              - \`.github/mcp-config.json\`
+              - Workflow \`env.DEFAULT_MCP_CONFIG\`
+
+              **File content:**
+              \`\`\`json
+              ${{ steps.read_file.outputs.content }}
+              \`\`\`
+
+              **Workflow env:**
+              \`\`\`json
+              ${{ steps.read_workflow.outputs.workflow_config }}
+              \`\`\`
+
+              Please update both files to match. See [Maintenance Guide](#) for details.
+
+              <details>
+              <summary>🔧 How to fix</summary>
+
+              1. Choose which version is correct (file or workflow)
+              2. Update the other to match
+              3. Commit the changes
+              </details>
+              `
+            })

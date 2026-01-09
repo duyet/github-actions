@@ -1,0 +1,263 @@
+name: 'Claude Code Shared Setup'
+description: 'Load shared Claude configuration and validate environment. Works cross-repo with fallback defaults.'
+
+inputs:
+  config_file:
+    description: 'Path to Claude defaults config file (ignored if using defaults below)'
+    required: false
+    type: string
+    default: '.github/claude-defaults.json'
+
+  workflow_type:
+    description: 'Type of workflow (review, schedule, interactive, plan)'
+    required: true
+    type: string
+
+  mcp_config:
+    description: 'Override MCP config path or inline JSON'
+    required: false
+    type: string
+    default: ''
+
+  # Fallback defaults for cross-repo usage (when config file doesn't exist)
+  default_provider:
+    description: 'Fallback API provider'
+    required: false
+    type: string
+    default: 'openrouter'
+
+  default_model:
+    description: 'Fallback model'
+    required: false
+    type: string
+    default: '@preset/claude-code-github-action'
+
+  default_bot_id:
+    description: 'Fallback bot ID'
+    required: false
+    type: string
+    default: '101855044'
+
+  default_bot_name:
+    description: 'Fallback bot name'
+    required: false
+    type: string
+    default: 'duyetbot'
+
+  default_plugin_marketplace:
+    description: 'Fallback plugin marketplace'
+    required: false
+    type: string
+    default: 'https://github.com/duyet/claude-plugins'
+
+outputs:
+  bot_id:
+    description: 'Bot ID'
+    value: ${{ steps.load-config.outputs.bot_id }}
+
+  bot_name:
+    description: 'Bot name'
+    value: ${{ steps.load-config.outputs.bot_name }}
+
+  provider:
+    description: 'API provider'
+    value: ${{ steps.load-config.outputs.provider }}
+
+  provider_base_url:
+    description: 'Provider base URL (if applicable)'
+    value: ${{ steps.load-config.outputs.provider_base_url }}
+
+  model:
+    description: 'Model identifier'
+    value: ${{ steps.load-config.outputs.model }}
+
+  allowed_tools:
+    description: 'Allowed tools for workflow type'
+    value: ${{ steps.load-config.outputs.allowed_tools }}
+
+  plugin_marketplaces:
+    description: 'Plugin marketplace URLs'
+    value: ${{ steps.load-config.outputs.plugin_marketplaces }}
+
+  mcp_config:
+    description: 'MCP config path or inline JSON'
+    value: ${{ steps.load-config.outputs.mcp_config }}
+
+  timeout:
+    description: 'Timeout in minutes'
+    value: ${{ steps.load-config.outputs.timeout }}
+
+  config_source:
+    description: 'Where config came from (file/fallback)'
+    value: ${{ steps.load-config.outputs.config_source }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Load Claude Configuration
+      id: load-config
+      shell: bash
+      run: |
+        set -e
+
+        # Default MCP config (inline fallback for cross-repo)
+        DEFAULT_MCP_CONFIG='{"mcpServers":{"sequential-thinking":{"command":"npx","args":["-y","@modelcontextprotocol/server-sequential-thinking"]}}}'
+
+        # Default tool profiles
+        declare -A TOOL_PROFILES
+        TOOL_PROFILES["review"]="Read,Grep,Glob,Bash,Plan"
+        TOOL_PROFILES["schedule"]="Read,Grep,Glob,Bash,Write,Edit"
+        TOOL_PROFILES["interactive"]="Read,Grep,Glob,Bash,Write,Edit,Skill,mcp__sequential-thinking__sequentialthinking,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log"
+        TOOL_PROFILES["plan"]="Read,Write,Edit,Bash,Glob,Grep,Plan,AskUserQuestion,Skill,mcp__sequential-thinking__sequentialthinking,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log"
+
+        # Default timeouts
+        declare -A TIMEOUTS
+        TIMEOUTS["review"]="30"
+        TIMEOUTS["schedule"]="60"
+        TIMEOUTS["interactive"]="30"
+        TIMEOUTS["plan"]="45"
+
+        CONFIG_FILE="${{ inputs.config_file }}"
+        WORKFLOW_TYPE="${{ inputs.workflow_type }}"
+
+        # Try to load from config file, otherwise use fallback defaults
+        if [[ -f "$CONFIG_FILE" ]]; then
+          # Validate JSON syntax
+          if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
+            echo "::warning::Invalid JSON in configuration file: $CONFIG_FILE, using fallback defaults"
+            USE_FALLBACK=true
+          else
+            echo "::notice::Loading configuration from file: $CONFIG_FILE"
+            USE_FALLBACK=false
+
+            # Extract from file
+            BOT_ID=$(jq -r '.bot.id' "$CONFIG_FILE")
+            BOT_NAME=$(jq -r '.bot.name' "$CONFIG_FILE")
+            PROVIDER=$(jq -r '.api.default_provider' "$CONFIG_FILE")
+            MODEL=$(jq -r '.api.default_model' "$CONFIG_FILE")
+            ALLOWED_TOOLS=$(jq -r ".tool_profiles.${WORKFLOW_TYPE}" "$CONFIG_FILE")
+            PLUGIN_MARKETPLACES=$(jq -r '.plugins.marketplaces | join("\n")' "$CONFIG_FILE")
+            TIMEOUT=$(jq -r ".timeouts.${WORKFLOW_TYPE}" "$CONFIG_FILE")
+            CONFIG_SOURCE="file"
+          fi
+        else
+          echo "::notice::Config file not found: $CONFIG_FILE, using fallback defaults"
+          USE_FALLBACK=true
+        fi
+
+        # Use fallback defaults if needed
+        if [[ "$USE_FALLBACK" == "true" ]]; then
+          echo "::group::📋 Using Fallback Configuration (Cross-Repo Mode)"
+
+          # Use input defaults or hardcoded fallbacks
+          BOT_ID="${{ inputs.default_bot_id }}"
+          BOT_NAME="${{ inputs.default_bot_name }}"
+          PROVIDER="${{ inputs.default_provider }}"
+          MODEL="${{ inputs.default_model }}"
+          PLUGIN_MARKETPLACES="${{ inputs.default_plugin_marketplace }}"
+          ALLOWED_TOOLS="${TOOL_PROFILES[$WORKFLOW_TYPE]}"
+          TIMEOUT="${TIMEOUTS[$WORKFLOW_TYPE]}"
+          CONFIG_SOURCE="fallback"
+
+          echo "Bot: $BOT_NAME ($BOT_ID)"
+          echo "Provider: $PROVIDER"
+          echo "Model: $MODEL"
+          echo "Workflow Type: $WORKFLOW_TYPE"
+          echo "Tools: $ALLOWED_TOOLS"
+          echo "Plugin Marketplace: $PLUGIN_MARKETPLACES"
+          echo "Timeout: $TIMEOUT minutes"
+          echo "::endgroup::"
+        fi
+
+        # Handle tool profile not found
+        if [[ "$ALLOWED_TOOLS" == "null" ]] || [[ -z "$ALLOWED_TOOLS" ]]; then
+          echo "::warning::No tool profile found for workflow type '$WORKFLOW_TYPE', using default"
+          ALLOWED_TOOLS="Read,Grep,Glob,Bash,Write,Edit"
+        fi
+
+        # Handle timeout not found
+        if [[ "$TIMEOUT" == "null" ]] || [[ -z "$TIMEOUT" ]]; then
+          echo "::warning::No timeout found for workflow type '$WORKFLOW_TYPE', using default 30"
+          TIMEOUT="30"
+        fi
+
+        # Set provider base URL
+        if [[ "$PROVIDER" == "openrouter" ]]; then
+          PROVIDER_BASE_URL="https://openrouter.ai/api"
+        else
+          PROVIDER_BASE_URL=""
+        fi
+
+        # Handle MCP config
+        MCP_CONFIG="${{ inputs.mcp_config }}"
+        if [[ -z "$MCP_CONFIG" ]]; then
+          if [[ "$USE_FALLBACK" == "false" ]]; then
+            # Try to use MCP config file from the config
+            MCP_CONFIG_PATH=$(jq -r '.mcp.default_config_path' "$CONFIG_FILE" 2>/dev/null)
+
+            if [[ -f "$MCP_CONFIG_PATH" ]]; then
+              MCP_CONFIG=$(cat "$MCP_CONFIG_PATH" | jq -c .)
+              echo "::notice::Using MCP config file: $MCP_CONFIG_PATH"
+            else
+              # Use inline fallback from config
+              MCP_CONFIG=$(jq -c '.mcp.default_inline_config' "$CONFIG_FILE" 2>/dev/null || echo "$DEFAULT_MCP_CONFIG")
+              echo "::notice::Using inline MCP config from defaults"
+            fi
+          else
+            # Use hardcoded inline fallback
+            MCP_CONFIG="$DEFAULT_MCP_CONFIG"
+            echo "::notice::Using inline MCP config (fallback)"
+          fi
+        fi
+
+        # Output all values
+        echo "bot_id=$BOT_ID" >> $GITHUB_OUTPUT
+        echo "bot_name=$BOT_NAME" >> $GITHUB_OUTPUT
+        echo "provider=$PROVIDER" >> $GITHUB_OUTPUT
+        echo "provider_base_url=$PROVIDER_BASE_URL" >> $GITHUB_OUTPUT
+        echo "model=$MODEL" >> $GITHUB_OUTPUT
+        echo "allowed_tools=$ALLOWED_TOOLS" >> $GITHUB_OUTPUT
+        echo "plugin_marketplaces=$PLUGIN_MARKETPLACES" >> $GITHUB_OUTPUT
+        echo "mcp_config=$MCP_CONFIG" >> $GITHUB_OUTPUT
+        echo "timeout=$TIMEOUT" >> $GITHUB_OUTPUT
+        echo "config_source=$CONFIG_SOURCE" >> $GITHUB_OUTPUT
+
+    - name: Display Configuration Summary
+      shell: bash
+      run: |
+        echo "::group::📋 Claude Configuration Summary"
+        echo "📦 Config Source: ${{ steps.load-config.outputs.config_source }}"
+        echo "🤖 Bot: ${{ steps.load-config.outputs.bot_name }} (${{ steps.load-config.outputs.bot_id }})"
+        echo "🔌 Provider: ${{ steps.load-config.outputs.provider }}"
+        echo "🧠 Model: ${{ steps.load-config.outputs.model }}"
+        echo "📝 Workflow Type: ${{ inputs.workflow_type }}"
+        echo "🔧 Tools: ${{ steps.load-config.outputs.allowed_tools }}"
+        echo "⏱️  Timeout: ${{ steps.load-config.outputs.timeout }} minutes"
+        echo "🔌 Plugins: ${{ steps.load-config.outputs.plugin_marketplaces }}"
+        echo "::endgroup::"
+
+    - name: Validate MCP Configuration
+      shell: bash
+      run: |
+        MCP_CONFIG="${{ steps.load-config.outputs.mcp_config }}"
+
+        if [[ -n "$MCP_CONFIG" ]]; then
+          # Validate JSON structure (it might be inline JSON or a file path)
+          if [[ "$MCP_CONFIG" == "{"* ]]; then
+            # Inline JSON - validate directly
+            if ! echo "$MCP_CONFIG" | jq empty 2>/dev/null; then
+              echo "::error::Invalid inline MCP config JSON"
+              exit 1
+            fi
+            echo "::notice::MCP config validated (inline JSON)"
+          elif [[ -f "$MCP_CONFIG" ]]; then
+            # File path - validate file exists and is valid JSON
+            if ! jq empty "$MCP_CONFIG" 2>/dev/null; then
+              echo "::error::Invalid JSON in MCP config file: $MCP_CONFIG"
+              exit 1
+            fi
+            echo "::notice::MCP config validated (file: $MCP_CONFIG)"
+          else
+            echo "::warning::MCP config path not found: $MCP_CONFIG (may be relative path in caller's repo)"
+          fi
+        fi

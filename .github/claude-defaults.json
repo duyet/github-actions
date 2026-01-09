@@ -1,0 +1,53 @@
+{
+  "bot": {
+    "id": "101855044",
+    "name": "duyetbot"
+  },
+  "api": {
+    "default_provider": "openrouter",
+    "default_model": "@preset/claude-code-github-action"
+  },
+  "plugins": {
+    "marketplaces": [
+      "https://github.com/duyet/claude-plugins"
+    ]
+  },
+  "mcp": {
+    "default_config_path": ".github/mcp-config.json",
+    "default_inline_config": {
+      "mcpServers": {
+        "sequential-thinking": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+        }
+      }
+    }
+  },
+  "timeouts": {
+    "interactive": 30,
+    "schedule": 60,
+    "review": 30,
+    "plan": 45
+  },
+  "tool_profiles": {
+    "review": "Read,Grep,Glob,Bash,Plan",
+    "interactive": "Read,Grep,Glob,Bash,Write,Edit,Skill,mcp__sequential-thinking__sequentialthinking,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log",
+    "schedule": "Read,Grep,Glob,Bash,Write,Edit",
+    "plan": "Read,Write,Edit,Bash,Glob,Grep,Plan,AskUserQuestion,Skill,mcp__sequential-thinking__sequentialthinking,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log"
+  },
+  "permissions": {
+    "default": {
+      "contents": "write",
+      "pull-requests": "write",
+      "issues": "write",
+      "id-token": "write",
+      "actions": "read"
+    },
+    "read_only": {
+      "contents": "read",
+      "pull-requests": "write",
+      "issues": "read",
+      "id-token": "write"
+    }
+  }
+}

@@ -45,6 +45,18 @@ on:
         type: boolean
         default: true
 
+      plugins:
+        description: 'Newline-separated list of Claude Code plugins to install'
+        required: false
+        type: string
+        default: ''
+
+      plugin_marketplaces:
+        description: 'Newline-separated list of plugin marketplace Git URLs'
+        required: false
+        type: string
+        default: 'https://github.com/duyet/claude-plugins'
+
     secrets:
       api_key:
         description: 'API key (Anthropic or OpenRouter)'
@@ -65,6 +77,7 @@ jobs:
       contents: read
       pull-requests: write
       id-token: write
+      actions: read
     env:
       GITHUB_TOKEN: ${{ secrets.bot_github_token }}
 
@@ -85,8 +98,13 @@ jobs:
           ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
         with:
           anthropic_api_key: ${{ secrets.api_key }}
+          additional_permissions: |
+            actions: read
           claude_args: |
             --allowed-tools ${{ inputs.allowed_tools }}
+            --mcp-config .github/mcp-config.json
+          plugins: ${{ inputs.plugins }}
+          plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -171,6 +189,8 @@ jobs:
             actions: read
           bot_id: ${{ inputs.bot_id }}
           bot_name: ${{ inputs.bot_name }}
+          plugins: ${{ inputs.plugins }}
+          plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
           show_full_output: ${{ inputs.show_full_output }}
 
   # Issue plan: triggered by issue assignment to @duyetbot
@@ -178,9 +198,11 @@ jobs:
     if: github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == '${{ inputs.bot_name }}'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
       issues: write
       id-token: write
+      actions: read
     env:
       GITHUB_TOKEN: ${{ secrets.bot_github_token }}
 
@@ -188,9 +210,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          token: ${{ secrets.bot_github_token }}
 
-      - name: Run Claude Plan
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ inputs.bot_name }}"
+          git config --global user.email "${{ inputs.bot_name }}@users.noreply.github.com"
+
+      - name: Run Claude Plan & Implementation
         id: plan
         uses: anthropics/claude-code-action@v1
         env:
@@ -201,46 +229,148 @@ jobs:
           ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
         with:
           anthropic_api_key: ${{ secrets.api_key }}
+          assignee_trigger: ${{ inputs.bot_name }}
+          use_commit_signing: true
+          additional_permissions: |
+            contents: write
+            pull-requests: write
+            actions: read
+          claude_args: |
+            --allowed-tools "Read,Write,Edit,Bash,Glob,Grep,Plan,AskUserQuestion,Skill,mcp__sequential-thinking__sequentialthinking,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log"
+            --mcp-config .github/mcp-config.json
+          plugins: ${{ inputs.plugins }}
+          plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE: #${{ github.event.issue.number }}
             TITLE: ${{ github.event.issue.title }}
             MODEL: ${{ inputs.model }}
             PROVIDER: ${{ inputs.provider }}
+            BOT_NAME: ${{ inputs.bot_name }}
 
-            Please analyze this issue and provide:
-            1. **Summary**: Brief overview of the issue
-            2. **Analysis**: Key points and considerations
-            3. **Approach**: Recommended steps to address this issue
-            4. **Estimate**: Rough complexity or effort level
+            ## Task
+            Analyze the assigned issue and take appropriate action based on its nature.
 
-            Keep the response concise and actionable.
-
-            ## Comment Format Instructions
-            When commenting on the issue:
-            1. Start with your analysis content
-            2. End with a footer in this EXACT format using a collapsed details block:
-
+            ## Issue Context
+            ```markdown
+            ${{ github.event.issue.body }}
             ```
+
+            ## Decision Tree
+
+            ### Step 1: Classify the Issue
+            Determine the issue type:
+            - **Analysis/Planning**: Questions, explorations, "how to", architecture discussions
+            - **Implementation**: Bug fixes, feature additions, refactoring tasks
+            - **Documentation**: Docs updates, README changes, examples
+            - **Investigation**: Bug reports needing diagnosis, performance issues
+            - **CI/CD Issues**: Failed workflows, broken pipelines, job failures
+
+            ### Step 2: Take Action Based on Type
+
+            #### For Analysis/Planning Issues:
+            Provide detailed analysis and comment on the issue:
+            1. **Summary**: Brief overview of the issue
+            2. **Analysis**: Key points, considerations, trade-offs
+            3. **Approach**: Recommended steps or options
+            4. **Estimate**: Rough complexity or effort level
+            5. **Questions**: Any clarifying questions for the issue author
+
+            Comment using: `gh issue comment ${{ github.event.issue.number }} --body "..."`
+
+            #### For Implementation Issues:
+            1. **Create a branch**: `git checkout -b issue-${{ github.event.issue.number }}-<brief-description>`
+            2. **Implement the fix/feature**:
+               - Read relevant files using Read, Glob, Grep
+               - Make code changes using Edit or Write
+               - Follow project conventions (check CLAUDE.md if exists)
+            3. **Commit changes**: `git commit -m "fix: resolve #${{ github.event.issue.number }}"`
+            4. **Push branch**: `git push origin issue-${{ github.event.issue.number }}-<brief-description>`
+            5. **Create PR**: `gh pr create --title "Fix #${{ github.event.issue.number }}: <title>" --body "Closes #${{ github.event.issue.number }}" --base main`
+            6. **Comment on issue**: `gh issue comment ${{ github.event.issue.number }} --body "Implemented in PR #<pr-number>"`
+
+            #### For Documentation Issues:
+            1. Update the documentation files
+            2. Commit with message: `docs: update #${{ github.event.issue.number }}`
+            3. Create PR or push directly if minor
+            4. Link back to issue
+
+            #### For Investigation Issues:
+            1. Use Read, Grep, Glob to explore the codebase
+            2. Identify root cause or provide detailed findings
+            3. Comment analysis on the issue with:
+               - Investigation findings
+               - Root cause (if bug)
+               - Recommended fix or next steps
+            4. If fix is straightforward, offer to implement
+
+            #### For CI/CD Issues:
+            1. Use `mcp__github_ci__get_ci_status` to check workflow run status
+            2. Use `mcp__github_ci__get_workflow_run_details` for detailed workflow information
+            3. Use `mcp__github_ci__download_job_log` to analyze job logs
+            4. Identify the failure root cause from logs
+            5. Comment analysis with:
+               - Failed workflow/job information
+               - Root cause of failure
+               - Recommended fix or configuration changes
+            6. If fix is straightforward (e.g., workflow syntax, simple config), implement it
+
+            ## Comment Format
+            When commenting on issues (using `gh issue comment`), ALWAYS include metadata footer:
+
+            ```markdown
             <details>
             <summary>📊 Analysis metadata</summary>
 
             | Property | Value |
             |----------|-------|
-            | Model | MODEL_NAME_HERE |
-            | Provider | PROVIDER_HERE |
-            | Tools | LIST_OF_TOOLS_USED |
+            | Model | ${{ inputs.model }} |
+            | Provider | ${{ inputs.provider }} |
+            | Tools | <tools you used> |
             | Analyzed by | [@${{ inputs.bot_name }}](https://github.com/${{ inputs.bot_name }}) |
 
-            *Token usage and detailed execution stats available in the [job log](JOB_URL).*
+            *Token usage and detailed execution stats available in the [job log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).*
 
             </details>
             ```
 
-            Replace MODEL_NAME_HERE with the actual model from the MODEL variable above.
-            Replace PROVIDER_HERE with the actual provider from the PROVIDER variable above.
-            Replace LIST_OF_TOOLS_USED with the comma-separated list of tools you used during this analysis (e.g., Read, Grep, Glob).
-            Replace JOB_URL with: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            ## PR Format (when creating PRs)
+            PR title: `fix|feat|docs|refactor: #${{ github.event.issue.number }} <brief description>`
+
+            PR body:
+            ```markdown
+            ## Summary
+            <Brief description of changes>
+
+            ## Changes
+            - <key change 1>
+            - <key change 2>
+
+            Closes #${{ github.event.issue.number }}
+
+            ---
+            <details>
+            <summary>📊 Implementation metadata</summary>
+
+            | Property | Value |
+            |----------|-------|
+            | Model | ${{ inputs.model }} |
+            | Provider | ${{ inputs.provider }} |
+            | Implemented by | [@${{ inputs.bot_name }}](https://github.com/${{ inputs.bot_name }}) |
+            | Issue | #${{ github.event.issue.number }} |
+
+            </details>
+            ```
+
+            ## Rules
+            - ALWAYS comment on the issue after analysis or implementation
+            - For implementation tasks, prefer creating a PR over just commenting
+            - Use git push origin <branch-name> after committing changes
+            - Read existing code before making changes to understand patterns
+            - Test locally if possible (run tests, linters)
+            - Ask questions if issue requirements are unclear
+            - Be concise but thorough in analysis
+
           bot_id: ${{ inputs.bot_id }}
           bot_name: ${{ inputs.bot_name }}
           show_full_output: ${{ inputs.show_full_output }}

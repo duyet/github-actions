@@ -8,50 +8,8 @@ on:
         required: true
         type: string
 
-      provider:
-        description: 'API provider to use (openrouter, anthropic, zai)'
-        required: false
-        type: string
-        default: 'openrouter'
-
-      model:
-        description: 'Model to use (e.g., anthropic/claude-3.5-haiku, @preset/claude-code-github-action)'
-        required: false
-        type: string
-        default: '@preset/claude-code-github-action'
-
-      bot_id:
-        description: 'GitHub bot user ID'
-        required: false
-        type: string
-        default: '101855044'
-
-      bot_name:
-        description: 'GitHub bot name'
-        required: false
-        type: string
-        default: 'duyetbot'
-
-      allowed_tools:
-        description: 'Comma-separated list of allowed Claude tools'
-        required: false
-        type: string
-        default: 'Read,Grep,Glob,Bash,Write,Edit'
-
-      plugins:
-        description: 'Newline-separated list of Claude Code plugins to install'
-        required: false
-        type: string
-        default: ''
-
-      plugin_marketplaces:
-        description: 'Newline-separated list of plugin marketplace Git URLs'
-        required: false
-        type: string
-        default: ''
-
       mcp_config:
-        description: 'MCP server configuration JSON string or path to JSON file'
+        description: 'Override MCP config path (empty uses default from claude-defaults.json)'
         required: false
         type: string
         default: ''
@@ -75,10 +33,10 @@ on:
         default: '25'
 
       timeout_minutes:
-        description: 'Timeout in minutes for the Claude job'
+        description: 'Override timeout in minutes (empty uses default from claude-defaults.json)'
         required: false
-        type: number
-        default: 30
+        type: string
+        default: ''
 
     secrets:
       api_key:
@@ -92,7 +50,7 @@ on:
 jobs:
   scheduled-task:
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.timeout_minutes }}
+    timeout-minutes: ${{ inputs.timeout_minutes != '' && inputs.timeout_minutes || 60 }}
     permissions:
       contents: write
       pull-requests: write
@@ -108,17 +66,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Claude Environment
+        id: claude-setup
+        uses: duyet/github-actions/.github/actions/claude-setup@main
+        with:
+          workflow_type: 'schedule'
+          mcp_config: ${{ inputs.mcp_config }}
+
       - name: Run Claude Scheduled Task
         id: claude
         uses: anthropics/claude-code-action@v1
         env:
           ANTHROPIC_API_KEY: ${{ secrets.api_key }}
-          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
+          ANTHROPIC_BASE_URL: ${{ steps.claude-setup.outputs.provider_base_url }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ steps.claude-setup.outputs.model }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ steps.claude-setup.outputs.model }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ steps.claude-setup.outputs.model }}
         with:
           anthropic_api_key: ${{ secrets.api_key }}
+          bot_id: ${{ steps.claude-setup.outputs.bot_id }}
+          bot_name: ${{ steps.claude-setup.outputs.bot_name }}
+          additional_permissions: |
+            actions: read
           prompt: |
             REPO: ${{ github.repository }}
             TRIGGERED_BY: ${{ github.event_name }}
@@ -126,14 +95,10 @@ jobs:
 
             ${{ inputs.prompt }}
           claude_args: |
-            --allowed-tools ${{ inputs.allowed_tools }}
+            --allowed-tools ${{ steps.claude-setup.outputs.allowed_tools }}
+            --mcp-config ${{ steps.claude-setup.outputs.mcp_config }}
             --max-turns ${{ inputs.max_turns }}
-            ${{ inputs.mcp_config != '' && format('--mcp-config {0}', inputs.mcp_config) || '' }}
             ${{ inputs.claude_args }}
           settings: ${{ inputs.settings }}
-          plugins: ${{ inputs.plugins }}
-          plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
-          bot_id: ${{ inputs.bot_id }}
-          bot_name: ${{ inputs.bot_name }}
-          additional_permissions: |
-            actions: read
+          plugins: ''
+          plugin_marketplaces: ${{ steps.claude-setup.outputs.plugin_marketplaces }}

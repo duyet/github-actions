@@ -45,6 +45,24 @@ on:
         type: string
         default: 'nightly-analysis,automated'
 
+      mcp_config:
+        description: 'MCP server configuration - file path or inline JSON. Empty uses default sequential-thinking server.'
+        required: false
+        type: string
+        default: ''
+
+      plugins:
+        description: 'Newline-separated list of Claude Code plugins to install'
+        required: false
+        type: string
+        default: ''
+
+      plugin_marketplaces:
+        description: 'Newline-separated list of plugin marketplace Git URLs'
+        required: false
+        type: string
+        default: 'https://github.com/duyet/claude-plugins'
+
     secrets:
       api_key:
         description: 'API key (Anthropic or OpenRouter)'
@@ -70,13 +88,63 @@ jobs:
       provider: ${{ inputs.provider }}
       model: ${{ inputs.model }}
       allowed_tools: ${{ inputs.allowed_tools }}
+      mcp_config: ${{ inputs.mcp_config }}
+      plugins: ${{ inputs.plugins }}
+      plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
       timeout_minutes: ${{ inputs.timeout_minutes }}
       max_turns: ${{ inputs.max_turns }}
       prompt: |
         # Nightly Codebase Analysis
 
         ## Task
-        Deep analyze the codebase to find the most impactful improvement opportunity.
+        Analyze the codebase and route findings to specialized agents based on issue type for targeted, expert-level analysis.
+
+        ## Agent Specializations
+
+        ### 🕵️ Code Analysis Agent (Bugs & Security)
+        **Expertise:** Root cause analysis, vulnerability detection, bug pattern recognition
+        **Best for:** `bug`, `security` type issues
+        **Approach:**
+        - Deep code path tracing and execution flow analysis
+        - Security vulnerability scanning (OWASP Top 10, dependency vulnerabilities)
+        - Bug pattern detection (null refs, race conditions, off-by-one errors)
+        - Error handling and edge case validation
+
+        ### 🔧 Code Refactor Agent (Code Quality)
+        **Expertise:** SOLID principles, design patterns, code smell detection
+        **Best for:** `refactor`, `chore` type issues
+        **Approach:**
+        - Complexity analysis (cyclomatic, cognitive)
+        - DRY violation detection and abstraction opportunities
+        - Design pattern application (Factory, Strategy, Observer, etc.)
+        - Architectural improvement recommendations
+
+        ### ⚡ Performance Agent (Optimization)
+        **Expertise:** Profiling, bottleneck identification, optimization strategies
+        **Best for:** `perf` type issues
+        **Approach:**
+        - Database query analysis (N+1, missing indexes)
+        - Memory leak detection and resource management
+        - Algorithm complexity analysis (Big O)
+        - Bundle size and dependency optimization
+
+        ### 📚 Documentation Agent (Knowledge Transfer)
+        **Expertise:** Technical writing, API documentation, developer experience
+        **Best for:** `docs`, `enhance` type issues
+        **Approach:**
+        - Documentation gap analysis (undocumented APIs, missing examples)
+        - README and getting started guide quality assessment
+        - Code comment quality and technical debt tagging
+        - Developer onboarding experience evaluation
+
+        ### 🧪 Test Quality Agent (Coverage & Strategy)
+        **Expertise:** Test-driven development, testing patterns, coverage analysis
+        **Best for:** Issues with missing test coverage or poor test quality
+        **Approach:**
+        - Coverage gap identification (unit, integration, E2E)
+        - Test quality assessment (flaky tests, assertions, edge cases)
+        - Testing strategy recommendations (pyramid, risk-based)
+        - Mock/stub improvement opportunities
 
         ## Discovery Areas
 
@@ -134,78 +202,209 @@ jobs:
         1. Scan codebase using Glob, Grep, Read
         2. Check for patterns in all discovery areas
         3. Run available linters/audits if present (`npm audit`, `pip audit`, etc.)
-        4. Rank findings by impact and effort
-        5. Select the BEST opportunity (high impact, reasonable effort)
+        4. **Route to appropriate specialist agent:**
+           - Bug/Security issues → 🕵️ Code Analysis Agent
+           - Refactor/Chore issues → 🔧 Code Refactor Agent
+           - Performance issues → ⚡ Performance Agent
+           - Documentation/Enhancement issues → 📚 Documentation Agent
+           - Test-related issues → 🧪 Test Quality Agent
+        5. Specialist agent performs deep analysis in their domain
+        6. Rank findings by impact and effort
+        7. Select the BEST opportunity (high impact, reasonable effort)
 
         ## Output
         Create ONE GitHub issue if actionable finding exists using:
         `gh issue create --title "..." --body "..." --label "..." --assignee duyetbot`
 
-        **Title format:** `[type] scope: description`
-        - Types: `bug`, `security`, `perf`, `refactor`, `enhance`, `docs`, `chore`
-        - Example: `[security] auth: remove hardcoded API key in config.ts`
+        **Title format:** `[PRIORITY] [type] scope: actionable description`
+        - **Priority levels:**
+          - `[CRITICAL]` - Security vulnerabilities, data loss risks, production blockers
+          - `[HIGH]` - Significant bugs, performance degradation, major tech debt
+          - `[MEDIUM]` - Code quality issues, maintainability concerns
+          - `[LOW]` - Minor improvements, nice-to-haves
+        - **Types:** `bug`, `security`, `perf`, `refactor`, `enhance`, `docs`, `chore`
+        - **Examples:**
+          - `[CRITICAL] [security] auth: JWT secret exposed in server logs`
+          - `[HIGH] [perf] api: N+1 query in user listing causes 5s latency`
+          - `[MEDIUM] [refactor] utils: duplicate validation logic across 3 files`
+          - `[LOW] [docs] readme: missing installation instructions for Windows`
 
         **Issue body template:**
         ```markdown
-        ## Type
-        - [ ] 🐛 Bug
-        - [ ] 🔒 Security
-        - [ ] ⚡ Performance
-        - [ ] 🔧 Refactor
-        - [ ] ✨ Enhancement
-        - [ ] 📝 Documentation
-        - [ ] 🧹 Chore
+        ## Issue Type
+        - [ ] 🐛 Bug (🕵️ Code Analysis Agent)
+        - [ ] 🔒 Security (🕵️ Code Analysis Agent)
+        - [ ] ⚡ Performance (⚡ Performance Agent)
+        - [ ] 🔧 Refactor (🔧 Code Refactor Agent)
+        - [ ] ✨ Enhancement (📚 Documentation Agent)
+        - [ ] 📝 Documentation (📚 Documentation Agent)
+        - [ ] 🧹 Chore (🔧 Code Refactor Agent)
+        - [ ] 🧪 Testing (🧪 Test Quality Agent)
 
-        ## Summary
-        <Clear 1-2 sentence description of the issue>
+        ## Priority
+        **[CRITICAL / HIGH / MEDIUM / LOW]**
 
-        ## Location
-        - **File:** `path/to/file.ext`
-        - **Lines:** X-Y
-        - **Function/Class:** `functionName` (if applicable)
+        ## Analyzed By
+        **Agent:** [🕵️ Code Analysis / 🔧 Code Refactor / ⚡ Performance / 📚 Documentation / 🧪 Test Quality]
 
-        ## Current State
-        ```<lang>
-        <code snippet showing the problem>
+        ## Impact Summary
+        <Concise 2-3 sentence description explaining: what is broken, who is affected, and what happens if this isn't fixed>
+
+        ## Location Details
+        - **File:** `path/to/file.ext:line_number`
+        - **Component/Module:** `module_name` (if applicable)
+        - **Function/Class:** `functionName` or `ClassName`
+        - **Affected Lines:** `X-Y` (specific range)
+
+        ## Problem Analysis
+
+        ### Current Implementation
+        ```<language>
+        // Paste the problematic code here (max 20 lines)
+        // Include surrounding context if needed
         ```
 
-        ## Problem
-        <Why this is an issue - impact, risk, maintainability concerns>
+        ### Root Cause
+        <Technical explanation of WHY this is an issue>
+        - **Symptom:** <What goes wrong>
+        - **Underlying Issue:** <The actual technical problem>
+        - **Detection Method:** <How you found this - grep pattern, linter, manual review>
+
+        ### Impact Assessment
+        | Dimension | Severity | Explanation |
+        |-----------|----------|-------------|
+        | **User Impact** | Critical/High/Med/Low | <How users are affected> |
+        | **Business Impact** | Revenue/Reputation/Risk/Legal | <Business consequences> |
+        | **Technical Debt** | Accumulating/Stable/Decaying | <Long-term code health effects> |
+        | **Urgency** | Immediate/This Sprint/Backlog | <Recommended timeline> |
 
         ## Proposed Solution
-        <Specific approach or fix>
 
-        ```<lang>
-        <example of fixed code if applicable>
+        ### Recommended Approach
+        <Step-by-step description of the fix>
+        1. <First step>
+        2. <Second step>
+        3. <Additional steps>
+
+        ### Implementation Example
+        ```<language>
+        // Show the corrected code implementation
+        // Include error handling, edge cases
         ```
 
-        ## Effort Estimate
-        - [ ] Small (< 1 hour)
-        - [ ] Medium (1-4 hours)
-        - [ ] Large (> 4 hours)
+        ### Testing Strategy
+        - [ ] Unit tests needed: <describe test cases>
+        - [ ] Integration tests needed: <describe scenarios>
+        - [ ] Manual verification: <steps to verify fix>
+        - [ ] Regression testing: <what might break>
+
+        ### Risks & Considerations
+        <Potential breaking changes, migration steps, or dependencies>
+        - **Breaking Change:** Yes/No - <explain if yes>
+        - **Migration Required:** Yes/No - <steps if yes>
+        - **Dependencies:** <any external deps or related changes>
+
+        ## Agent-Specific Recommendations
+
+        ### 🕵️ Code Analysis Agent (for Bugs/Security)
+        - **Security Category:** <Injection / Auth / Crypto / Config / Dependency>
+        - **Bug Pattern:** <NullRef / RaceCondition / OffByOne / TypeError / LogicError>
+        - **Attack Vector:** <How this could be exploited if security issue>
+        - **Defensive Measures:** <Security best practices to apply>
+        - **Related CWE:** <CWE number if applicable>
+
+        ### 🔧 Code Refactor Agent (for Code Quality)
+        - **Code Smell:** <LongMethod / LargeClass / DuplicateCode / ComplexCondition / MagicNumber>
+        - **SOLID Violation:** <SRP / OCP / LSP / ISP / DIP - which principle is violated>
+        - **Design Pattern Opportunity:** <Factory / Strategy / Observer / Decorator / etc.>
+        - **Refactoring Technique:** <ExtractMethod / IntroduceParameterObject / ReplaceConditionalWithPolymorphism>
+        - **Complexity Metrics:**
+          - Cyclomatic Complexity: <value>
+          - Cognitive Complexity: <value>
+          - Maintainability Index: <value>
+
+        ### ⚡ Performance Agent (for Optimization)
+        - **Performance Type:** <Database / Memory / CPU / Network / BundleSize>
+        - **Bottleneck Source:** <N+1Query / MissingIndex / MemoryLeak / InefficientAlgorithm / UnboundedCache>
+        - **Current Complexity:** <O(n), O(n²), etc.>
+        - **Target Complexity:** <Improved Big O after fix>
+        - **Performance Gain:** <Expected improvement: "reduce from 5s to 200ms">
+        - **Profiling Recommendations:** <Tools to use: Chrome DevTools, pprof, etc.>
+
+        ### 📚 Documentation Agent (for Docs/Enhancement)
+        - **Documentation Type:** <API / README / ArchitectureGuide / CodeComment / Example>
+        - **Audience:** <Developers / Users / Contributors / Onboarding>
+        - **Missing Sections:** <Installation / Usage / APIReference / Architecture / Contributing>
+        - **Documentation Standard:** <JSDoc / PyDoc / OpenAPI / Markdown / Javadoc>
+        - **Accessibility:** <Language clarity, examples, diagrams needed>
+        - **DX Impact:** <How this improves developer experience>
+
+        ### 🧪 Test Quality Agent (for Testing)
+        - **Test Type:** <Unit / Integration / E2E / Property / Mutation>
+        - **Coverage Gap:** <Currently X%, should be Y%>
+        - **Test Quality Issue:** <Flaky / MissingAssertions / Unclear / TooBroad / Brittle>
+        - **Testing Framework:** <Jest / Pytest / JUnit / etc.>
+        - **Test Pattern Recommendation:** <AAA / GivenWhenThen / TestBuilder / TestDataBuilder>
+        - **Edge Cases to Cover:** <list specific edge cases>
+
+        ## Effort & Priority
+
+        **Effort Estimate:**
+        - [ ] Small (< 1 hour) - Quick fix, minimal testing
+        - [ ] Medium (1-4 hours) - Requires careful implementation
+        - [ ] Large (> 4 hours) - Significant refactoring or research needed
+
+        **Suggested Priority:**
+        - [ ] 🔥 Immediate - Drop everything, fix now
+        - [ ] 📅 This Sprint - Include in current iteration
+        - [ ] 📋 Backlog - Triage into upcoming sprint
+
+        ## Related Information
+        - **Similar Issues:** <links to related issues or PRs>
+        - **Documentation:** <links to relevant docs>
+        - **References:** <StackOverflow, GitHub issues, RFCs, etc.>
+        - **Agent Analysis:** <agent-specific context or tools used>
 
         ---
         <details>
-        <summary>📊 Analysis metadata</summary>
+        <summary>📊 Analysis Metadata</summary>
 
         | Property | Value |
         |----------|-------|
-        | Model | ${{ inputs.model }} |
-        | Provider | ${{ inputs.provider }} |
-        | Created by | [@duyetbot](https://github.com/duyetbot) |
+        | **Model** | ${{ inputs.model }} |
+        | **Provider** | ${{ inputs.provider }} |
+        | **Agent Type** | [Code Analysis / Code Refactor / Performance / Documentation / Test Quality] |
+        | **Discovered By** | Automated nightly analysis |
+        | **Created By** | [@duyetbot](https://github.com/duyetbot) |
+        | **Analysis Date** | $(date -u +"%Y-%m-%d %H:%M:%S UTC") |
+        | **Confidence** | High/Medium/Low |
+        | **Requires Review** | Yes/No |
 
+        **Analysis Notes:**
+        <Additional context about the discovery process, agent-specific insights, or alternative solutions considered>
         </details>
+
+        **Labels:** ${{ inputs.issue_labels }}, priority:<critical|high|medium|low>, agent:<analysis|refactor|performance|docs|test>
+        **Assignee:** duyetbot
         ```
 
-        **Labels to add:** ${{ inputs.issue_labels }}
-        **Assignee:** duyetbot
-
         ## Rules
-        - Create issue ONLY if finding is actionable and valuable
-        - ONE issue per run - pick the highest impact item
-        - Include specific file paths and line numbers
-        - Provide enough context for any developer to understand and fix
-        - Skip trivial formatting or style-only issues
-        - If codebase is healthy, do NOT create any issue - just report "No significant issues found"
+        - **Agent Selection:** Route to the specialist agent matching the issue type
+        - **Create issue ONLY if finding is:**
+          - Actionable (specific fix exists)
+          - Valuable (impact justifies effort)
+          - Verified (not a false positive)
+        - **ONE issue per run** - pick the single highest-impact item
+        - **Include complete context:**
+          - Exact file paths with line numbers
+          - Code snippets showing current state
+          - Clear reproduction steps or examples
+          - Specific implementation guidance
+          - Agent-specific analysis and recommendations
+        - **Avoid:**
+          - Trivial formatting/style-only issues
+          - Subjective opinions without objective criteria
+          - Issues without clear remediation paths
+        - **If codebase is healthy:** do NOT create any issue - report "No significant issues found"
 
         ${{ inputs.extra_instructions }}

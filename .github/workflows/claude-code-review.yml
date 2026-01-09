@@ -33,6 +33,30 @@ on:
         type: boolean
         default: true
 
+      bot_name:
+        description: 'GitHub bot name'
+        required: false
+        type: string
+        default: 'duyetbot'
+
+      mcp_config:
+        description: 'MCP server configuration JSON string or path to JSON file'
+        required: false
+        type: string
+        default: '.github/mcp-config.json'
+
+      plugins:
+        description: 'Newline-separated list of Claude Code plugins to install'
+        required: false
+        type: string
+        default: ''
+
+      plugin_marketplaces:
+        description: 'Newline-separated list of plugin marketplace Git URLs'
+        required: false
+        type: string
+        default: 'https://github.com/duyet/claude-plugins'
+
     secrets:
       api_key:
         description: 'API key (Anthropic or OpenRouter)'
@@ -46,6 +70,7 @@ jobs:
       pull-requests: write
       issues: read
       id-token: write
+      actions: read
     env:
       ANTHROPIC_BASE_URL_VALUE: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
       GITHUB_TOKEN: ${{ secrets.bot_github_token }}
@@ -67,8 +92,13 @@ jobs:
           ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
         with:
           anthropic_api_key: ${{ secrets.api_key }}
+          additional_permissions: |
+            actions: read
           claude_args: |
             --allowed-tools ${{ inputs.allowed_tools }}
+            --mcp-config ${{ inputs.mcp_config }}
+          plugins: ${{ inputs.plugins }}
+          plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}

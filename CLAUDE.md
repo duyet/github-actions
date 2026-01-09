@@ -97,6 +97,84 @@ github-actions/
 
 ## Configuration Management
 
+### Cross-Repo Reusability Pattern
+
+This repository uses a **hybrid configuration approach** to support both same-repo and cross-repo usage:
+
+1. **`.github/claude-defaults.json`** - Source of truth for configuration (used when available)
+2. **`.github/actions/claude-setup/action.yml`** - Composite action with fallback defaults
+3. **Inline fallbacks** - Built-in defaults when config file doesn't exist (cross-repo)
+
+#### Cross-Repo Usage
+
+When other repositories use these workflows, they work **without any setup**:
+
+```yaml
+jobs:
+  nightly-analysis:
+    uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+    with:
+      prompt: |
+        # Nightly Codebase Analysis
+        Analyze the codebase and create issues for bugs, security issues, or tech debt.
+    secrets:
+      api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+```
+
+**What happens automatically:**
+- ✅ Uses fallback defaults when config files don't exist in caller's repo
+- ✅ Bot identity, model, provider all use sensible defaults
+- ✅ Tool profiles selected based on workflow type
+- ✅ MCP configuration uses inline fallback
+- ✅ Plugin marketplace defaults to `duyet/claude-plugins`
+
+#### Customization Options
+
+**Option 1: Use defaults (recommended for quick start)**
+```yaml
+uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+```
+
+**Option 2: Override specific values**
+```yaml
+uses: duyet/github-actions/.github/workflows/claude-schedule.yml@main
+  with:
+    prompt: 'My custom prompt'
+    mcp_config: '{"mcpServers":{"my-server":{"command":"path","args":[]}}'
+    timeout_minutes: '120'
+```
+
+**Option 3: Fork and customize**
+1. Fork this repository
+2. Edit `.github/claude-defaults.json` with your defaults
+3. Update `claude-setup/action.yml` defaults if needed
+4. Use your fork in workflows: `your-org/github-actions/.github/workflows/claude-schedule.yml@main`
+
+#### Composite Action for Workflow Creators
+
+If you're creating workflows in THIS repository, use the composite action:
+
+```yaml
+steps:
+  - uses: actions/checkout@v6
+
+  - uses: ./.github/actions/claude-setup@main
+    id: claude-setup
+    with:
+      workflow_type: 'schedule'  # or 'review', 'interactive', 'plan'
+
+  - uses: anthropics/claude-code-action@v1
+    env:
+      ANTHROPIC_BASE_URL: ${{ steps.claude-setup.outputs.provider_base_url }}
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ steps.claude-setup.outputs.model }}
+    with:
+      bot_id: ${{ steps.claude-setup.outputs.bot_id }}
+      bot_name: ${{ steps.claude-setup.outputs.bot_name }}
+      allowed_tools: ${{ steps.claude-setup.outputs.allowed_tools }}
+      mcp_config: ${{ steps.claude-setup.outputs.mcp_config }}
+      plugin_marketplaces: ${{ steps.claude-setup.outputs.plugin_marketplaces }}
+```
+
 ### Input Types
 - **allowed_tools**: Restrict which Claude tools can be used
 - **file_patterns**: Filter which files to review
