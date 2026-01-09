@@ -126,7 +126,7 @@ jobs:
 - ✅ Bot identity, model, provider all use sensible defaults
 - ✅ Tool profiles selected based on workflow type
 - ✅ MCP configuration uses inline fallback
-- ✅ Plugin marketplace defaults to `duyet/claude-plugins`
+- ✅ Plugin marketplace defaults to `duyet/claude-plugins.git`
 
 #### Customization Options
 

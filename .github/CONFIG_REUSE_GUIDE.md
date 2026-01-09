@@ -63,7 +63,7 @@ This repository uses a **hybrid configuration approach** with fallback defaults,
 {
   "bot": { "id": "101855044", "name": "duyetbot" },
   "api": { "default_provider": "openrouter", "default_model": "@preset/claude-code-github-action" },
-  "plugins": { "marketplaces": ["https://github.com/duyet/claude-plugins"] },
+  "plugins": { "marketplaces": ["https://github.com/duyet/claude-plugins.git"] },
   "mcp": {
     "default_config_path": ".github/mcp-config.json",
     "default_inline_config": { "mcpServers": { ... } }

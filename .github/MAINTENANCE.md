@@ -108,7 +108,7 @@ After updating MCP config:
 
 ## Plugin Marketplace Management
 
-The default plugin marketplace is `https://github.com/duyet/claude-plugins`.
+The default plugin marketplace is `https://github.com/duyet/claude-plugins.git`.
 
 To change it:
 

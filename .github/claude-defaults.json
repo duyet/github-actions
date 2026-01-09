@@ -9,7 +9,7 @@
   },
   "plugins": {
     "marketplaces": [
-      "https://github.com/duyet/claude-plugins"
+      "https://github.com/duyet/claude-plugins.git"
     ]
   },
   "mcp": {

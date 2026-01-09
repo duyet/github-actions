@@ -55,7 +55,7 @@ on:
         description: 'Newline-separated list of plugin marketplace Git URLs'
         required: false
         type: string
-        default: 'https://github.com/duyet/claude-plugins'
+        default: 'https://github.com/duyet/claude-plugins.git'
 
     secrets:
       api_key:

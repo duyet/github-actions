@@ -48,7 +48,7 @@ inputs:
     description: 'Fallback plugin marketplace'
     required: false
     type: string
-    default: 'https://github.com/duyet/claude-plugins'
+    default: 'https://github.com/duyet/claude-plugins.git'
 
 outputs:
   bot_id:
