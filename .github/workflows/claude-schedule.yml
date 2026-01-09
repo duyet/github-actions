@@ -85,6 +85,10 @@ on:
         description: 'API key (Anthropic or OpenRouter)'
         required: true
 
+      bot_github_token:
+        description: 'GitHub token for bot operations (defaults to GITHUB_TOKEN if not provided)'
+        required: false
+
 jobs:
   scheduled-task:
     runs-on: ubuntu-latest
@@ -96,7 +100,7 @@ jobs:
       id-token: write
       actions: read
     env:
-      GITHUB_TOKEN: ${{ secrets.bot_github_token }}
+      GITHUB_TOKEN: ${{ secrets.bot_github_token || github.token }}
 
     steps:
       - name: Checkout repository
