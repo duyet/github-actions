@@ -8,6 +8,36 @@ on:
         required: true
         type: string
 
+      provider:
+        description: 'API provider to use (openrouter, anthropic, or zai)'
+        required: false
+        type: string
+        default: ''
+
+      model:
+        description: 'Model to use'
+        required: false
+        type: string
+        default: ''
+
+      allowed_tools:
+        description: 'Comma-separated list of allowed Claude tools'
+        required: false
+        type: string
+        default: ''
+
+      plugins:
+        description: 'Newline-separated list of Claude Code plugins to install'
+        required: false
+        type: string
+        default: ''
+
+      plugin_marketplaces:
+        description: 'Newline-separated list of plugin marketplace Git URLs'
+        required: false
+        type: string
+        default: ''
+
       mcp_config:
         description: 'Override MCP config path (empty uses default from claude-defaults.json)'
         required: false
@@ -72,16 +102,19 @@ jobs:
         with:
           workflow_type: 'schedule'
           mcp_config: ${{ inputs.mcp_config }}
+          default_provider: ${{ inputs.provider || 'openrouter' }}
+          default_model: ${{ inputs.model || '@preset/claude-code-github-action' }}
+          default_plugin_marketplace: ${{ inputs.plugin_marketplaces || 'https://github.com/duyet/claude-plugins.git' }}
 
       - name: Run Claude Scheduled Task
         id: claude
         uses: anthropics/claude-code-action@v1
         env:
           ANTHROPIC_API_KEY: ${{ secrets.api_key }}
-          ANTHROPIC_BASE_URL: ${{ steps.claude-setup.outputs.provider_base_url }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ steps.claude-setup.outputs.model }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ steps.claude-setup.outputs.model }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ steps.claude-setup.outputs.model }}
+          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || (inputs.provider != '' && '' || steps.claude-setup.outputs.provider_base_url) }}
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model || steps.claude-setup.outputs.model }}
+          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model || steps.claude-setup.outputs.model }}
+          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model || steps.claude-setup.outputs.model }}
         with:
           anthropic_api_key: ${{ secrets.api_key }}
           bot_id: ${{ steps.claude-setup.outputs.bot_id }}
@@ -111,10 +144,10 @@ jobs:
 
             ${{ inputs.prompt }}
           claude_args: |
-            --allowed-tools ${{ steps.claude-setup.outputs.allowed_tools }}
+            --allowed-tools ${{ inputs.allowed_tools || steps.claude-setup.outputs.allowed_tools }}
             --mcp-config ${{ steps.claude-setup.outputs.mcp_config }}
             --max-turns ${{ inputs.max_turns }}
             ${{ inputs.claude_args }}
           settings: ${{ inputs.settings }}
-          plugins: ''
-          plugin_marketplaces: ${{ steps.claude-setup.outputs.plugin_marketplaces }}
+          plugins: ${{ inputs.plugins }}
+          plugin_marketplaces: ${{ inputs.plugin_marketplaces || steps.claude-setup.outputs.plugin_marketplaces }}
