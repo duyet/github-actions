@@ -4,14 +4,20 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+# Required permissions for the reusable workflow
+# These permissions are inherited by the called workflow's jobs
+permissions:
+  contents: write        # For checking out code and pushing fixes
+  pull-requests: write   # For commenting on PRs
+  issues: read           # For reading issue context
+  checks: read           # For reading CI check results
+  statuses: read         # For reading commit statuses
+  actions: read          # For reading workflow run details
+  id-token: write        # For OIDC token generation
+
 jobs:
   claude-review:
     uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: read
-      id-token: write
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
       bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}

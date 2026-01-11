@@ -17,15 +17,18 @@ on:
   issues:
     types: [opened, assigned]
 
+# Required permissions for the reusable workflow
+# These permissions are inherited by the called workflow's jobs
+permissions:
+  contents: write        # For checking out code and pushing changes
+  pull-requests: write   # For commenting on PRs
+  issues: write          # For commenting on and managing issues
+  actions: read          # For reading workflow run details
+  id-token: write        # For OIDC token generation
+
 jobs:
   claude:
     uses: duyet/github-actions/.github/workflows/claude.yml@main
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      id-token: write
-      actions: read
     secrets:
       api_key: ${{ secrets.OPENROUTER_API_KEY }}
       bot_github_token: ${{ secrets.DUYETBOT_GITHUB_TOKEN }}

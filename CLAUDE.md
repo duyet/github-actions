@@ -267,6 +267,16 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+# Required permissions for the reusable workflow
+permissions:
+  contents: write        # For checking out code and pushing fixes
+  pull-requests: write   # For commenting on PRs
+  issues: read           # For reading issue context
+  checks: read           # For reading CI check results
+  statuses: read         # For reading commit statuses
+  actions: read          # For reading workflow run details
+  id-token: write        # For OIDC token generation
+
 jobs:
   review:
     uses: duyet/github-actions/.github/workflows/claude-code-review.yml@main
@@ -285,6 +295,14 @@ on:
     types: [created]
   issues:
     types: [opened, assigned]
+
+# Required permissions for the reusable workflow
+permissions:
+  contents: write        # For checking out code and pushing changes
+  pull-requests: write   # For commenting on PRs
+  issues: write          # For commenting on and managing issues
+  actions: read          # For reading workflow run details
+  id-token: write        # For OIDC token generation
 
 jobs:
   claude:
@@ -308,6 +326,7 @@ jobs:
 | Model not found | Use `@preset/claude-code-github-action` |
 | Workflow hangs/times out | Limit `file_patterns`, increase timeout |
 | Invalid marketplace URL | Ensure URL ends with `.git` suffix |
+| "Nested job requesting permissions" error | Add all required permissions at workflow level (see Step 3 examples) |
 
 **Debug failed runs:**
 1. Actions tab → Click failed run → Expand step logs
