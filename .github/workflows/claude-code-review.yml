@@ -248,12 +248,53 @@ jobs:
             - **Types:** `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`
             - **Always include PR number:** `(PR #${{ github.event.pull_request.number }})`
 
-            ## Comment Format Instructions
-            When leaving your review comment on the PR using GitHub CLI:
-            1. Start with your review content (findings, suggestions, etc.)
+            ## Inline Comments
+            For specific code issues, use inline review comments on the exact lines:
+
+            ### Creating Inline Review Comments
+            Use the GitHub CLI to create line-specific review comments:
+
+            ```bash
+            # Single line comment
+            gh api \
+              repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              -f body="Your review feedback here" \
+              -f commit_id="${{ github.event.pull_request.head.sha }}" \
+              -f path="path/to/file.ext" \
+              -f position=42
+
+            # position is the line number in the diff
+            # path is the file path relative to repo root
+            # commit_id is the PR head SHA
+            ```
+
+            ### Comment Strategy
+
+            ### Batch Comments
+            For multiple inline comments, create a JSON file and use `gh api` with batch input:
+
+            ```bash
+            # Create comments.json
+            cat > comments.json << 'EOF'
+            [
+              {"body": "Consider using const here", "commit_id": "SHA", "path": "src/file.js", "position": 10},
+              {"body": "Missing error handling", "commit_id": "SHA", "path": "src/file.js", "position": 25}
+            ]
+            EOF
+
+            # Apply all comments
+            gh api \
+              repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments \
+              --input comments.json
+            ```
+
+            ## PR-Level Comment Format
+            When leaving an overall review summary (after inline comments, if any):
+
+            1. Start with your review summary
             2. End with a footer in this EXACT format using a collapsed details block:
 
-            ```
+            ```markdown
             <details>
             <summary>📊 Review metadata</summary>
 
