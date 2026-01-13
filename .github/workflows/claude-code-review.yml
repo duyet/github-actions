@@ -291,8 +291,24 @@ jobs:
             ## PR-Level Comment Format
             When leaving an overall review summary (after inline comments, if any):
 
-            1. Start with your review summary
-            2. End with a footer in this EXACT format using a collapsed details block:
+            ### Step 1: Find Existing Bot Comment
+            First, check if there's already a review comment from this bot on this PR:
+
+            ```bash
+            # Search for existing comment by bot
+            EXISTING_COMMENT=$(gh api \
+              repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+              --jq ".[] | select(.user.login == \"${{ inputs.bot_name }}\") | select(.body | contains(\"📊 Review metadata\")) | .id" | head -n1)
+
+            if [ -n "$EXISTING_COMMENT" ]; then
+              echo "Found existing comment ID: $EXISTING_COMMENT"
+            else
+              echo "No existing comment found, will create new"
+            fi
+            ```
+
+            ### Step 2: Prepare Comment Body
+            Create your review summary with this EXACT format:
 
             ```markdown
             <details>
@@ -304,17 +320,52 @@ jobs:
             | Provider | PROVIDER_HERE |
             | Tools | LIST_OF_TOOLS_USED |
             | Reviewed by | [@${{ inputs.bot_name }}](https://github.com/${{ inputs.bot_name }}) |
+            | Updated | UPDATE_TIMESTAMP |
 
             *Token usage and detailed execution stats available in the [job log](JOB_URL).*
 
             </details>
             ```
 
-            Replace MODEL_NAME_HERE with the actual model from the MODEL variable above.
-            Replace PROVIDER_HERE with the actual provider from the PROVIDER variable above.
-            Replace LIST_OF_TOOLS_USED with the comma-separated list of tools you used during this review (e.g., Read, Grep, Glob).
-            Replace JOB_URL with: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            Do NOT include "Co-Authored-By" or "Note: Review generated using Claude Code" text.
+            Replace:
+            - MODEL_NAME_HERE with the actual model
+            - PROVIDER_HERE with the actual provider
+            - LIST_OF_TOOLS_USED with tools used (e.g., Read, Grep, Glob)
+            - JOB_URL with: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - UPDATE_TIMESTAMP with current datetime: `date -u +"%Y-%m-%d %H:%M:%S UTC"`
+
+            ### Step 3: Edit or Create Comment
+
+            ```bash
+            # Save comment body to a file (properly escaped)
+            cat > review_comment.md << 'REVIEW_EOF'
+            [Your review summary here]
+
+            <details>
+            <summary>📊 Review metadata</summary>
+            ...
+            </details>
+            REVIEW_EOF
+
+            # Edit existing or create new comment
+            if [ -n "$EXISTING_COMMENT" ]; then
+              # Edit existing comment
+              gh api \
+                repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT \
+                --method PATCH \
+                -f body="$(cat review_comment.md)"
+              echo "Updated existing comment"
+            else
+              # Create new comment
+              gh pr comment ${{ github.event.pull_request.number }} --body-file review_comment.md
+              echo "Created new comment"
+            fi
+            ```
+
+            **Important:**
+            - Do NOT include "Co-Authored-By" or "Note: Review generated using Claude Code" text
+            - Always search for existing comments before posting
+            - Use the exact `📊 Review metadata` marker to identify bot comments
           bot_id: 101855044
           bot_name: ${{ inputs.bot_name }}
           show_full_output: ${{ inputs.show_full_output }}
