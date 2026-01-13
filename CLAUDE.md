@@ -335,6 +335,67 @@ jobs:
 - Calling workflows should use: `@v1` or `@main`
 - Maintain changelog of breaking changes
 
+## Downstream Repository Tracking
+
+When updating this repository's workflows, **all downstream repos must be updated** to maintain consistency and prevent issues.
+
+### Current Downstream Repositories
+
+| Repo | Workflow Files | Status | Last Updated | Notes |
+|------|---------------|--------|--------------|-------|
+| [duyet/monorepo](https://github.com/duyet/monorepo) | claude.yml, claude-nightly.yml | ✅ Updated | 2025-01-13 | Commit f689219 |
+| [duyet/clickhouse-monitoring](https://github.com/duyet/clickhouse-monitoring) | claude.yml | ⏳ PR #801 | 2025-01-13 | Awaiting merge |
+
+### Permission Standards (Post-2025-01-13)
+
+**All downstream repos should use these permissions in their caller workflows:**
+
+| Workflow | contents | pull-requests | issues | notes |
+|----------|----------|---------------|--------|-------|
+| claude.yml | `read` | `write` | `write` | Review-only, no PR creation |
+| claude-code-review.yml | `read` | `write` | `read` | Review-only |
+| claude-nightly.yml | `read` | `read` | `write` | Analysis only |
+| claude-schedule.yml | `read` | `read` | `write` | Analysis only |
+
+**Critical Rule:** Never set `contents: write` in caller workflows - it overrides the called workflow's `contents: read` and allows PR creation.
+
+### Update Process
+
+1. **Update upstream (this repo)**
+   ```bash
+   # Make changes to workflows
+   git commit -m "feat(workflows): description"
+   git push origin main
+   ```
+
+2. **Update each downstream repo**
+   ```bash
+   cd /path/to/downstream-repo
+   # Update workflow file permissions
+   git commit -m "fix(workflows): sync with upstream github-actions"
+   git push origin main
+   ```
+
+3. **Track in CLAUDE.md**
+   - Update status table above
+   - Add note about what changed
+   - Update "Last Updated" date
+
+### Sync Script
+
+Use the local sync script to quickly check downstream repos:
+
+```bash
+# From github-actions repo
+./scripts/sync-downstream.sh
+```
+
+This will:
+- Scan each downstream repo for workflow files
+- Check if permissions match upstream standards
+- Report repos that need updates
+- Optional: auto-create fix branches
+
 ## Related Documentation
 
 - [GitHub Actions Reusable Workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows)
