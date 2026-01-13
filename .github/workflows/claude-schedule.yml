@@ -52,8 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.timeout_minutes != '' && inputs.timeout_minutes || 60 }}
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      pull-requests: read
       issues: write
       id-token: write
       actions: read
@@ -93,19 +93,25 @@ jobs:
             TRIGGERED_BY: ${{ github.event_name }}
             RUN_ID: ${{ github.run_id }}
 
-            ## Semantic Commit Format Requirements
+            ## Important Constraints
 
-            When creating commits or pull requests, ALWAYS use semantic commit format:
-            - **Format:** `<type>: <scope> - <subject>`
+            This bot analyzes and provides recommendations only. It does NOT:
+            - Create branches, commits, or pull requests
+            - Modify code in the repository
+            - Push any changes
+
+            When suggesting actions to users, you may recommend:
+            - Branch names (semantic format: `<type>/#<issue>-<description>`)
+            - Commit message formats (`<type>: <scope> - <subject> (#<issue>)`)
+            - PR title formats (following semantic commit format)
+
+            **Suggested formats for human implementation:**
             - **Types:** `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`, `ci`, `build`
             - **Examples:**
               - `fix: api - resolve timeout issue`
               - `feat: ui - add dark mode support`
               - `docs: readme - update installation guide`
-              - `refactor: utils - simplify validation logic`
-              - `perf: database - optimize query performance`
-            - **PR titles must also follow semantic format**
-            - **Always include issue numbers when available:** `fix: api - resolve #123`
+            - **Branch format:** `<type>/#<issue>-<description>` (lowercase, hyphens)
 
             ---
 

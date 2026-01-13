@@ -292,8 +292,7 @@ jobs:
       !github.event.issue.pull_request
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
       issues: write
       id-token: write
       actions: read
@@ -305,14 +304,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.bot_github_token }}
 
-      - name: Configure Git
-        run: |
-          git config --global user.name "${{ inputs.bot_name }}"
-          git config --global user.email "${{ inputs.bot_name }}@users.noreply.github.com"
-
-      - name: Run Claude Plan & Implementation
+      - name: Run Claude Issue Analysis
         id: plan
         uses: anthropics/claude-code-action@v1
         env:
@@ -324,13 +317,10 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.api_key }}
           assignee_trigger: ${{ inputs.bot_name }}
-          use_commit_signing: true
           additional_permissions: |
-            contents: write
-            pull-requests: write
             actions: read
           claude_args: |
-            --allowed-tools "Read,Write,Edit,Bash,Glob,Grep,Plan,AskUserQuestion,Skill,mcp__sequential-thinking__sequentialthinking,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log"
+            --allowed-tools "Read,Glob,Grep,Plan,AskUserQuestion,Skill,mcp__sequential-thinking__sequentialthinking,mcp__github_ci__get_ci_status,mcp__github_ci__get_workflow_run_details,mcp__github_ci__download_job_log"
             --mcp-config .github/mcp-config.json
           plugins: ${{ inputs.plugins }}
           plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
@@ -362,6 +352,8 @@ jobs:
 
             ### Step 2: Take Action Based on Type
 
+            **IMPORTANT**: This bot analyzes and provides recommendations only. It does NOT create branches, commits, or pull requests.
+
             #### For Analysis/Planning Issues:
             Provide detailed analysis and comment on the issue:
             1. **Summary**: Brief overview of the issue
@@ -373,28 +365,27 @@ jobs:
             Comment using: `gh issue comment ${{ github.event.issue.number }} --body "..."`
 
             #### For Implementation Issues:
-            1. **Create a branch** (use semantic format): `git checkout -b fix/#${{ github.event.issue.number }}-brief-description`
+            Analyze the requirements and provide implementation guidance:
+            1. **Read relevant files** using Read, Glob, Grep to understand the codebase
+            2. **Identify affected components** and dependencies
+            3. **Propose implementation approach**:
+               - Step-by-step implementation plan
+               - Code patterns to follow (check CLAUDE.md if exists)
+               - Potential edge cases to handle
+            4. **Suggest branch name** (semantic format):
                - Format: `<type>/#<issue>-<description>` (e.g., `fix/#123-auth-bug`, `feat/#124-api-endpoint`)
                - Types: `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`
                - Use hyphens to separate words, lowercase only
-            2. **Implement the fix/feature**:
-               - Read relevant files using Read, Glob, Grep
-               - Make code changes using Edit or Write
-               - Follow project conventions (check CLAUDE.md if exists)
-            3. **Commit changes** (use semantic commit format):
-               - `git commit -m "fix: resolve #${{ github.event.issue.number }} - brief description"`
-               - Or for features: `git commit -m "feat: add #${{ github.event.issue.number }} - feature description"`
-               - Or for other types: `docs:`, `refactor:`, `chore:`, `perf:`, etc.
-               - Always include the issue number (#123) in the commit message
-            4. **Push branch**: `git push origin fix/#${{ github.event.issue.number }}-brief-description`
-            5. **Create PR** (with semantic commit format in title): `gh pr create --title "fix: resolve #${{ github.event.issue.number }} - brief description" --body "Closes #${{ github.event.issue.number }}" --base main`
-            6. **Comment on issue**: `gh issue comment ${{ github.event.issue.number }} --body "Implemented in PR #<pr-number>"`
+            5. **Suggest commit message format**:
+               - `fix: resolve #${{ github.event.issue.number }} - brief description`
+               - Or for features: `feat: add #${{ github.event.issue.number }} - feature description`
+            6. **Comment analysis** on the issue with findings and recommendations
 
             #### For Documentation Issues:
-            1. Update the documentation files
-            2. Commit with message: `docs: update #${{ github.event.issue.number }}`
-            3. Create PR or push directly if minor
-            4. Link back to issue
+            1. Analyze the documentation changes needed
+            2. Identify which files need updates
+            3. Provide structure/content recommendations
+            4. Comment analysis with specific suggestions
 
             #### For Investigation Issues:
             1. Use Read, Grep, Glob to explore the codebase
@@ -403,7 +394,6 @@ jobs:
                - Investigation findings
                - Root cause (if bug)
                - Recommended fix or next steps
-            4. If fix is straightforward, offer to implement
 
             #### For CI/CD Issues:
             1. Use `mcp__github_ci__get_ci_status` to check workflow run status
@@ -414,7 +404,6 @@ jobs:
                - Failed workflow/job information
                - Root cause of failure
                - Recommended fix or configuration changes
-            6. If fix is straightforward (e.g., workflow syntax, simple config), implement it
 
             ## Comment Format
             When commenting on issues (using `gh issue comment`), ALWAYS include metadata footer:
@@ -492,56 +481,30 @@ jobs:
             - Always search for existing comments before posting
             - Use the `📊` emoji marker to identify bot comments
 
-            ## PR & Commit Format (Semantic Versioning - Required)
+            ## Suggested PR & Commit Format (For Human Implementation)
 
-            **Format:** `<type>: <scope> - <subject> (<issue-number>)`
+            When suggesting implementation to users, recommend this semantic format:
+
+            **Commit format:** `<type>: <scope> - <subject> (#<issue-number>)`
+
+            **Types:** `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`, `ci`, `build`
 
             **Examples:**
             - `fix: auth - resolve JWT validation issue (#123)`
             - `feat: api - add rate limiting support (#124)`
             - `docs: readme - update installation instructions (#125)`
-            - `refactor: utils - simplify validation logic (#126)`
-            - `perf: database - optimize user query (#127)`
-            - `chore: dependencies - update security patches (#128)`
 
-            **Valid types:** `fix`, `feat`, `docs`, `refactor`, `perf`, `chore`, `test`, `ci`, `build`
-
-            **All commits and PR titles MUST follow this semantic format for consistency.**
-
-            PR body:
-            ```markdown
-            ## Summary
-            <Brief description of changes>
-
-            ## Changes
-            - <key change 1>
-            - <key change 2>
-
-            Closes #${{ github.event.issue.number }}
-
-            ---
-            <details>
-            <summary>📊 Implementation metadata</summary>
-
-            | Property | Value |
-            |----------|-------|
-            | Model | ${{ inputs.model }} |
-            | Provider | ${{ inputs.provider }} |
-            | Implemented by | [@${{ inputs.bot_name }}](https://github.com/${{ inputs.bot_name }}) |
-            | Issue | #${{ github.event.issue.number }} |
-            | ...| ... |
-
-            </details>
-            ```
+            **Branch format:** `<type>/#<issue>-<description>` (lowercase, hyphens)
+            - `fix/#123-auth-bug`
+            - `feat/#124-api-endpoint`
 
             ## Rules
-            - ALWAYS comment on the issue after analysis or implementation
-            - For implementation tasks, prefer creating a PR over just commenting
-            - Use git push origin <branch-name> after committing changes
-            - Read existing code before making changes to understand patterns
-            - Test locally if possible (run tests, linters)
+            - ALWAYS comment on the issue with analysis and recommendations
+            - Provide clear, actionable implementation guidance (NOT implementation)
+            - Read existing code before suggesting changes to understand patterns
             - Ask questions if issue requirements are unclear
             - Be concise but thorough in analysis
+            - This bot does NOT create branches, commits, or pull requests
 
           bot_id: ${{ inputs.bot_id }}
           bot_name: ${{ inputs.bot_name }}
