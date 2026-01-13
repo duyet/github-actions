@@ -232,9 +232,13 @@ jobs:
           plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
           show_full_output: ${{ inputs.show_full_output }}
 
-  # Issue plan: triggered by issue assignment to @duyetbot
+  # Issue plan: triggered by issue assignment to @duyetbot (excludes PRs to prevent loops)
   issue-plan:
-    if: github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == '${{ inputs.bot_name }}'
+    if: |
+      github.event_name == 'issues' &&
+      github.event.action == 'assigned' &&
+      github.event.assignee.login == '${{ inputs.bot_name }}' &&
+      !github.event.issue.pull_request
     runs-on: ubuntu-latest
     permissions:
       contents: write
