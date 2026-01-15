@@ -219,6 +219,37 @@ jobs:
             - Security concerns
             - Test coverage
 
+            ## Call Stack & Flow Analysis
+            For non-trivial changes, generate a visual call stack diagram using tree notation.
+
+            ### Format Example
+            ```
+            POST /endpoint
+            │
+            ├─ handleRequest()
+            │   ├─ validateInput()                    # ❌ 400 if invalid
+            │   ├─ authenticate()                     # ❌ 401 if unauthorized
+            │   └─ processRequest()
+            │       ├─ fetchData()                    # ❌ 500 if DB error
+            │       ├─ transformData()
+            │       └─ saveResult()                   # ❌ 500 if write fails
+            │
+            └─ sendResponse()                         # ✅ 200 on success
+            ```
+
+            ### Guidelines
+            - Use `├─` for intermediate items, `└─` for last item
+            - Use `│` for vertical continuation
+            - Add `# ❌ <code>` comments for error exit points
+            - Add `# ✅ <code>` for success paths
+            - Show branching logic (if/switch) as separate sub-trees
+            - Include relevant details: cache lookups, external calls, event routing
+
+            This helps reviewers understand:
+            - Overall design and call hierarchy
+            - All failure modes and where errors are handled
+            - Data flow and integration points
+
             Use the repository's CLAUDE.md (if available) for guidance on style and conventions.
             Be constructive and helpful in your feedback.
 
