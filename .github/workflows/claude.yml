@@ -285,10 +285,10 @@ jobs:
 
   # Issue plan: triggered by issue assignment to @duyetbot (excludes PRs to prevent loops)
   issue-plan:
-    if: |
+    if: >-
       github.event_name == 'issues' &&
       github.event.action == 'assigned' &&
-      github.event.assignee.login == '${{ inputs.bot_name }}' &&
+      github.event.assignee.login == inputs.bot_name &&
       !github.event.issue.pull_request
     runs-on: ubuntu-latest
     permissions:
