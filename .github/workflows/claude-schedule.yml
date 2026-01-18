@@ -8,6 +8,36 @@ on:
         required: true
         type: string
 
+      provider:
+        description: 'API provider to use (openrouter, anthropic, or zai)'
+        required: false
+        type: string
+        default: 'openrouter'
+
+      model:
+        description: 'Model to use (e.g., anthropic/claude-3.5-haiku, @preset/claude-code-github-action)'
+        required: false
+        type: string
+        default: '@preset/claude-code-github-action'
+
+      allowed_tools:
+        description: 'Comma-separated list of allowed Claude tools'
+        required: false
+        type: string
+        default: 'Read,Grep,Glob,Write,Edit,Bash,Skill'
+
+      file_patterns:
+        description: 'Comma-separated file patterns to analyze (leave empty for all files)'
+        required: false
+        type: string
+        default: ''
+
+      dry_run:
+        description: 'Dry run mode - plan only, no implementation'
+        required: false
+        type: string
+        default: 'false'
+
       mcp_config:
         description: 'Override MCP config path (empty uses default from claude-defaults.json)'
         required: false
@@ -72,6 +102,8 @@ jobs:
         with:
           workflow_type: 'schedule'
           mcp_config: ${{ inputs.mcp_config }}
+          default_provider: ${{ inputs.provider }}
+          default_model: ${{ inputs.model }}
 
       - name: Run Claude Scheduled Task
         id: claude
@@ -117,8 +149,8 @@ jobs:
 
             ${{ inputs.prompt }}
           claude_args: |
-            --allowed-tools ${{ steps.claude-setup.outputs.allowed_tools }}
-            --mcp-config ${{ steps.claude-setup.outputs.mcp_config }}
+            --allowed-tools ${{ inputs.allowed_tools || steps.claude-setup.outputs.allowed_tools }}
+            --mcp-config ${{ inputs.mcp_config || steps.claude-setup.outputs.mcp_config }}
             --max-turns ${{ inputs.max_turns }}
             ${{ inputs.claude_args }}
           settings: ${{ inputs.settings }}
