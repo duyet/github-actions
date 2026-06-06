@@ -99,6 +99,32 @@ jobs:
         ## Task
         Analyze the codebase and route findings to specialized agents based on issue type for targeted, expert-level analysis.
 
+        ## CRITICAL: Deduplication Check (MUST DO FIRST)
+
+        Before analyzing anything, you MUST check for existing open issues and PRs:
+
+        ```bash
+        # Check for existing open issues with nightly-analysis label
+        gh issue list --state open --label "nightly-analysis" --json number,title,createdAt
+
+        # Check for existing open PRs by the bot
+        gh pr list --state open --author duyetbot --json number,title,createdAt
+
+        # Check for recently closed issues/PRs (last 7 days) to avoid re-creating
+        gh issue list --state closed --label "nightly-analysis" --json number,title,closedAt | head -20
+        gh pr list --state closed --author duyetbot --json number,title,mergedAt,closedAt | head -20
+        ```
+
+        **STOP and report "No new issues found" if:**
+        - An open issue/PR already exists for the same finding (similar title/scope)
+        - A closed issue/PR for the same finding was created in the last 7 days
+        - There are already 3+ open issues with `nightly-analysis` label (backlog is full)
+
+        **Duplicate Detection Rules:**
+        - "Update X from vA to vB" = duplicate if any open PR updates X
+        - "Outdated dependency: X" = duplicate if any open issue mentions X
+        - Same file + same issue type = likely duplicate, check carefully
+
         ## Agent Specializations
 
         ### 🕵️ Code Analysis Agent (Bugs & Security)
@@ -389,11 +415,13 @@ jobs:
         ```
 
         ## Rules
+        - **DEDUPLICATION IS MANDATORY:** Always run the deduplication check FIRST before any analysis
         - **Agent Selection:** Route to the specialist agent matching the issue type
         - **Create issue ONLY if finding is:**
           - Actionable (specific fix exists)
           - Valuable (impact justifies effort)
           - Verified (not a false positive)
+          - **NOT A DUPLICATE** (no existing open issue/PR for same thing)
         - **ONE issue per run** - pick the single highest-impact item
         - **Include complete context:**
           - Exact file paths with line numbers
@@ -405,6 +433,9 @@ jobs:
           - Trivial formatting/style-only issues
           - Subjective opinions without objective criteria
           - Issues without clear remediation paths
-        - **If codebase is healthy:** do NOT create any issue - report "No significant issues found"
+          - **Dependency updates if similar PR exists or was recently closed**
+          - **Any issue that duplicates an existing open issue/PR**
+        - **If codebase is healthy OR all findings are duplicates:** do NOT create any issue - report "No significant issues found"
+        - **Dependency Update Throttling:** Only create ONE dependency update issue per week maximum. Skip if any dependency PR was created in last 7 days.
 
         ${{ inputs.extra_instructions }}
