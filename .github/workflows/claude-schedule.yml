@@ -1,5 +1,8 @@
 name: Claude Schedule
 
+env:
+  DEFAULT_MCP_CONFIG: '{"mcpServers":{"sequential-thinking":{"command":"npx","args":["-y","@modelcontextprotocol/server-sequential-thinking"]}}}'
+
 on:
   workflow_call:
     inputs:
