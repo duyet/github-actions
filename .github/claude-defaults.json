@@ -4,8 +4,8 @@
     "name": "duyetbot"
   },
   "api": {
-    "default_provider": "openrouter",
-    "default_model": "@preset/claude-code-github-action"
+    "default_provider": "anyrouter",
+    "default_model": "anyrouter/auto"
   },
   "plugins": {
     "marketplaces": [

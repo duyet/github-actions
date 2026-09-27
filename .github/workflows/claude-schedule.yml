@@ -75,15 +75,10 @@ jobs:
 
       - name: Run Claude Scheduled Task
         id: claude
-        uses: anthropics/claude-code-action@v1
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.api_key }}
-          ANTHROPIC_BASE_URL: ${{ steps.claude-setup.outputs.provider_base_url }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ steps.claude-setup.outputs.model }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ steps.claude-setup.outputs.model }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ steps.claude-setup.outputs.model }}
+        uses: duyet/claude-anyrouter-action@main
         with:
-          anthropic_api_key: ${{ secrets.api_key }}
+          anyrouter_api_key: ${{ secrets.api_key }}
+          model: ${{ steps.claude-setup.outputs.model }}
           bot_id: ${{ steps.claude-setup.outputs.bot_id }}
           bot_name: ${{ steps.claude-setup.outputs.bot_name }}
           additional_permissions: |

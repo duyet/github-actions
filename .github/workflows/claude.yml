@@ -89,15 +89,10 @@ jobs:
 
       - name: Run Claude Code Review
         id: review
-        uses: anthropics/claude-code-action@v1
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.api_key }}
-          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
+        uses: duyet/claude-anyrouter-action@main
         with:
-          anthropic_api_key: ${{ secrets.api_key }}
+          anyrouter_api_key: ${{ secrets.api_key }}
+          model: ${{ inputs.model }}
           additional_permissions: |
             actions: read
           claude_args: |
@@ -105,6 +100,9 @@ jobs:
             --mcp-config .github/mcp-config.json
           plugins: ${{ inputs.plugins }}
           plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
+          bot_id: ${{ inputs.bot_id }}
+          bot_name: ${{ inputs.bot_name }}
+          show_full_output: ${{ inputs.show_full_output }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -266,15 +264,10 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@v1
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.api_key }}
-          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
+        uses: duyet/claude-anyrouter-action@main
         with:
-          anthropic_api_key: ${{ secrets.api_key }}
+          anyrouter_api_key: ${{ secrets.api_key }}
+          model: ${{ inputs.model }}
           additional_permissions: |
             actions: read
           bot_id: ${{ inputs.bot_id }}
@@ -307,15 +300,10 @@ jobs:
 
       - name: Run Claude Issue Analysis
         id: plan
-        uses: anthropics/claude-code-action@v1
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.api_key }}
-          ANTHROPIC_BASE_URL: ${{ inputs.provider == 'openrouter' && 'https://openrouter.ai/api' || '' }}
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: ${{ inputs.model }}
-          ANTHROPIC_DEFAULT_SONNET_MODEL: ${{ inputs.model }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: ${{ inputs.model }}
+        uses: duyet/claude-anyrouter-action@main
         with:
-          anthropic_api_key: ${{ secrets.api_key }}
+          anyrouter_api_key: ${{ secrets.api_key }}
+          model: ${{ inputs.model }}
           assignee_trigger: ${{ inputs.bot_name }}
           additional_permissions: |
             actions: read
@@ -324,6 +312,9 @@ jobs:
             --mcp-config .github/mcp-config.json
           plugins: ${{ inputs.plugins }}
           plugin_marketplaces: ${{ inputs.plugin_marketplaces }}
+          bot_id: ${{ inputs.bot_id }}
+          bot_name: ${{ inputs.bot_name }}
+          show_full_output: ${{ inputs.show_full_output }}
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE: #${{ github.event.issue.number }}
