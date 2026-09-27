@@ -24,13 +24,13 @@ inputs:
     description: 'Fallback API provider'
     required: false
     type: string
-    default: 'openrouter'
+    default: 'anyrouter'
 
   default_model:
     description: 'Fallback model'
     required: false
     type: string
-    default: '@preset/claude-code-github-action'
+    default: 'anyrouter/auto'
 
   default_bot_id:
     description: 'Fallback bot ID'
@@ -184,6 +184,8 @@ runs:
         # Set provider base URL
         if [[ "$PROVIDER" == "openrouter" ]]; then
           PROVIDER_BASE_URL="https://openrouter.ai/api"
+        elif [[ "$PROVIDER" == "anyrouter" ]]; then
+          PROVIDER_BASE_URL="https://anyrouter.dev/api/v1"
         else
           PROVIDER_BASE_URL=""
         fi

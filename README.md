@@ -1,6 +1,6 @@
 # GitHub Actions Reusable Workflows
 
-Reusable GitHub Actions workflows powered by Claude AI for code review and interactive assistance.
+Reusable GitHub Actions workflows powered by Claude AI via [AnyRouter](https://anyrouter.dev) for code review and interactive assistance.
 
 ## Available Workflows
 
